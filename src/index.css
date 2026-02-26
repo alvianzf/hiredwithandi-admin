@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-yellow: #facc15; /* learnwithandi accent */
+  --color-primary-red: #ef4444; /* learnwithandi accent */
+  --color-dark-bg: #0f172a;
+  --color-dark-surface: rgba(30, 41, 59, 0.7);
+  --color-light-bg: #f8fafc;
+  --color-light-surface: rgba(255, 255, 255, 0.8);
+}
+
+@layer base {
+  :root {
+    --bg-color: var(--color-light-bg);
+    --surface-color: var(--color-light-surface);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.3);
+  }
+
+  .dark {
+    --bg-color: var(--color-dark-bg);
+    --surface-color: var(--color-dark-surface);
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.1);
+  }
+
+  body {
+    @apply bg-[var(--bg-color)] text-[var(--text-primary)] transition-colors duration-300 antialiased font-sans;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-[var(--surface-color)] backdrop-blur-md border border-[var(--glass-border)] shadow-lg;
+  }
+}
