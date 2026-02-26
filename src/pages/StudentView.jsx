@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { FiArrowLeft, FiDownload, FiBriefcase, FiCalendar, FiCheckCircle } from "react-icons/fi";
+import { FiArrowLeft, FiDownload } from "react-icons/fi";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -103,105 +103,158 @@ export default function StudentView() {
           </div>
         </div>
 
-        {/* Dashboard Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="glass p-4 rounded-xl flex items-center space-x-4">
-              <div className="p-3 bg-blue-500/20 text-blue-500 rounded-lg"><FiBriefcase size={24}/></div>
-              <div>
-                <p className="text-sm text-[var(--text-secondary)] font-medium">Applied</p>
-                <p className="text-2xl font-bold">24</p>
+        {/* --- 1. NEW TOP METRICS: Average Time per Stage & Job Fit --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Average Time per Stage */}
+          <div className="glass p-6 rounded-2xl shadow-sm">
+            <h3 className="text-lg font-bold mb-4 border-b border-[var(--border-color)] pb-2 text-[var(--color-primary-yellow)]">
+              Average Time per Stage
+            </h3>
+            <div className="flex items-end space-x-2 mb-4">
+              <span className="text-4xl font-bold">0d</span>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[var(--text-secondary)]">Wishlist <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">1 jobs</span></span>
+                <span className="font-bold">0d</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[var(--text-secondary)]">Applied <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
+                <span className="font-bold">0d</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[var(--text-secondary)]">HR Interview <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">1 jobs</span></span>
+                <span className="font-bold">0d</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[var(--text-secondary)]">Technical Interview <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
+                <span className="font-bold">0d</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[var(--text-secondary)]">Additional Interview <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
+                <span className="font-bold">0d</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[var(--text-secondary)]">Offered <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">1 jobs</span></span>
+                <span className="font-bold">0d</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[var(--text-secondary)]">Rejected by Company <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
+                <span className="font-bold">0d</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[var(--text-secondary)]">Rejected by Applicant <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
+                <span className="font-bold">0d</span>
               </div>
             </div>
-            <div className="glass p-4 rounded-xl flex items-center space-x-4">
-              <div className="p-3 bg-yellow-500/20 text-yellow-500 rounded-lg"><FiCalendar size={24}/></div>
-              <div>
-                <p className="text-sm text-[var(--text-secondary)] font-medium">Interviewing</p>
-                <p className="text-2xl font-bold">5</p>
+          </div>
+
+          {/* Job Fit Percentage */}
+          <div className="glass p-6 rounded-2xl shadow-sm flex flex-col">
+            <h3 className="text-lg font-bold mb-4 border-b border-[var(--border-color)] pb-2 text-[var(--color-primary-yellow)]">
+              Job Fit Percentage
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-4 flex-1">
+              <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
+                <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Median</span>
+                <span className="text-3xl font-bold text-blue-400">23%</span>
+              </div>
+              <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
+                <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Average</span>
+                <span className="text-3xl font-bold text-purple-400">45%</span>
+              </div>
+              <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
+                <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Lowest</span>
+                <span className="text-3xl font-bold text-red-500">22%</span>
+              </div>
+              <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
+                <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Highest</span>
+                <span className="text-3xl font-bold text-green-500">90%</span>
               </div>
             </div>
-            <div className="glass p-4 rounded-xl flex items-center space-x-4">
-              <div className="p-3 bg-green-500/20 text-green-500 rounded-lg"><FiCheckCircle size={24}/></div>
-              <div>
-                <p className="text-sm text-[var(--text-secondary)] font-medium">Offers</p>
-                <p className="text-2xl font-bold">1</p>
-              </div>
+            
+            <div className="mt-4 text-center text-sm text-[var(--text-secondary)]">
+              Based on 3 jobs with JFP data
             </div>
-            <div className="glass p-4 rounded-xl flex items-center space-x-4 border border-red-500/30">
-              <div className="p-3 bg-red-500/20 text-red-500 rounded-lg">
-                <span className="text-xl font-bold block leading-none">!</span>
-              </div>
-              <div>
-                <p className="text-sm text-[var(--text-secondary)] font-medium">Rejected</p>
-                <p className="text-2xl font-bold">18</p>
-              </div>
-            </div>
+          </div>
+
         </div>
 
-        {/* Recreated Dashboard Kanban View (Mock Data) */}
+        {/* --- 2. KANBAN BOARD (Updated Columns) --- */}
         <div className="glass p-6 rounded-2xl min-h-[400px]">
           <h3 className="text-xl font-bold mb-6 border-b border-[var(--border-color)] pb-3 text-[var(--color-primary-yellow)]">
             Job Tracker Pipeline 
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="flex overflow-x-auto space-x-6 pb-4 kanban-scroll scrollbar-thin scrollbar-thumb-[var(--border-color)] scrollbar-track-transparent">
             
-            {/* Applied Column */}
-            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-blue-500">
+            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-gray-400 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Applied <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">2</span>
+                Wishlist <span className="text-xs bg-gray-500 text-white px-2 py-1 rounded-full">1</span>
               </h4>
-              <div className="space-y-3">
-                <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-[var(--border-color)] shadow-sm">
-                  <p className="font-medium">Frontend Engineer</p>
-                  <p className="text-xs text-[var(--text-secondary)]">TechCorp Inc.</p>
-                  <p className="text-xs mt-2 opacity-60">Applied: 2 days ago</p>
+               <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-[var(--border-color)] shadow-sm">
+                  <p className="font-medium">Product Manager</p>
+                  <p className="text-xs text-[var(--text-secondary)]">StartupX</p>
                 </div>
-                <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-[var(--border-color)] shadow-sm">
-                  <p className="font-medium">React Developer</p>
-                  <p className="text-xs text-[var(--text-secondary)]">WebSolutions</p>
-                  <p className="text-xs mt-2 opacity-60">Applied: 5 days ago</p>
-                </div>
-              </div>
             </div>
 
-            {/* Interviewing Column */}
-            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-yellow-500">
+            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-blue-500 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Interviewing <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded-full">1</span>
+                Applied <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">0</span>
               </h4>
-              <div className="space-y-3">
-                <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-yellow-500/30 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-8 h-8 bg-yellow-500/10 rounded-bl-full"></div>
+              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+            </div>
+
+            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-indigo-500 min-w-[300px] flex-shrink-0">
+              <h4 className="font-bold flex justify-between items-center mb-4">
+                HR Interview <span className="text-xs bg-indigo-500 text-white px-2 py-1 rounded-full">1</span>
+              </h4>
+               <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-indigo-500/30 shadow-sm">
                   <p className="font-medium">Software Engineer</p>
                   <p className="text-xs text-[var(--text-secondary)]">InnovateTech</p>
-                  <p className="text-xs mt-2 text-yellow-500 font-medium">Next: Tech Interview (Tomorrow)</p>
                 </div>
-              </div>
             </div>
 
-            {/* Final Stage Column */}
-            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-purple-500">
+            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-yellow-500 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Final Stage <span className="text-xs bg-purple-500 text-white px-2 py-1 rounded-full">0</span>
+                Technical Interview <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded-full">0</span>
               </h4>
-              <div className="p-4 text-center border-2 border-dashed border-[var(--border-color)] rounded-lg text-sm text-[var(--text-secondary)]">
-                No active final interviews
-              </div>
+              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
             </div>
 
-            {/* Offered Column */}
-            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-green-500">
+            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-orange-500 min-w-[300px] flex-shrink-0">
+              <h4 className="font-bold flex justify-between items-center mb-4">
+                Additional Interview <span className="text-xs bg-orange-500 text-white px-2 py-1 rounded-full">0</span>
+              </h4>
+              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+            </div>
+
+            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-green-500 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
                 Offered <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">1</span>
               </h4>
-              <div className="space-y-3">
-                <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-green-500/30 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-8 h-8 bg-green-500/20 rounded-bl-full flex items-center justify-center pl-2 pb-2">🎉</div>
-                  <p className="font-medium">UI Developer</p>
-                  <p className="text-xs text-[var(--text-secondary)]">DesignStudio</p>
-                  <p className="text-xs mt-2 text-green-500 font-bold">$90k - Accepted</p>
-                </div>
+              <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-green-500/30 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-8 h-8 bg-green-500/20 rounded-bl-full flex items-center justify-center pl-2 pb-2">🎉</div>
+                <p className="font-medium">UI Developer</p>
+                <p className="text-xs text-[var(--text-secondary)]">DesignStudio</p>
               </div>
+            </div>
+
+            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-red-500 min-w-[300px] flex-shrink-0">
+              <h4 className="font-bold flex justify-between items-center mb-4">
+                Rejected by Company <span className="text-xs bg-red-500 text-white px-2 py-1 rounded-full">0</span>
+              </h4>
+              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+            </div>
+
+            <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-red-900 min-w-[300px] flex-shrink-0">
+              <h4 className="font-bold flex justify-between items-center mb-4">
+                Rejected by Applicant <span className="text-xs bg-red-900 text-white px-2 py-1 rounded-full">0</span>
+              </h4>
+              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
             </div>
 
           </div>
