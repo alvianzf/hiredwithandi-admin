@@ -8,6 +8,7 @@ export default function StudentsMgmt() {
   const { admin } = useAuth();
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -139,10 +140,12 @@ export default function StudentsMgmt() {
     e.target.value = null; // reset file input so the same file can be chosen again
   };
 
-  const filteredStudents = students.filter(s => 
-    s.name.toLowerCase().includes(search.toLowerCase()) || 
-    s.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredStudents = students.filter(s => {
+    const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
+                          s.email.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || s.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="space-y-6">
@@ -172,7 +175,7 @@ export default function StudentsMgmt() {
       </div>
 
       <div className="glass rounded-xl overflow-hidden shadow-xl">
-        <div className="p-4 border-b border-[var(--border-color)]">
+        <div className="p-4 border-b border-[var(--border-color)] flex flex-col md:flex-row gap-4">
           <input 
             type="text" 
             placeholder="Search students..." 
@@ -180,6 +183,15 @@ export default function StudentsMgmt() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full md:w-1/3 px-4 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
           />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full md:w-48 px-4 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Disabled">Disabled</option>
+          </select>
         </div>
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse">

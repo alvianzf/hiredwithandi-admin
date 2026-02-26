@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { FiMenu, FiMoon, FiSun, FiUsers, FiPieChart, FiLogOut } from "react-icons/fi";
+import { FiMenu, FiMoon, FiSun, FiUsers, FiPieChart, FiLogOut, FiBriefcase } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 
 export default function AdminLayout() {
@@ -17,15 +17,21 @@ export default function AdminLayout() {
     }
   }, [isDarkMode]);
 
-  const navLinks = [
-    { name: "Dashboard", path: "/", icon: <FiPieChart size={20} /> },
-    { name: "Students & Members", path: "/students", icon: <FiUsers size={20} /> },
-  ];
+  const navLinks = admin?.isSuperadmin 
+    ? [
+        { name: "System Overview", path: "/", icon: <FiPieChart size={20} /> },
+        { name: "Organizations", path: "/organizations", icon: <FiBriefcase size={20} /> },
+        { name: "Platform Users", path: "/platform-users", icon: <FiUsers size={20} /> },
+      ]
+    : [
+        { name: "Dashboard", path: "/", icon: <FiPieChart size={20} /> },
+        { name: "Students & Members", path: "/students", icon: <FiUsers size={20} /> },
+      ];
 
   const adminInitials = admin?.name ? admin.name.substring(0, 2).toUpperCase() : "AD";
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--bg-color)] text-[var(--text-primary)] transition-colors duration-300">
+    <div className="flex h-screen overflow-hidden bg-[var(--bg-color)] bg-doodle text-[var(--text-primary)] transition-colors duration-300">
       
       {/* Sidebar */}
       <aside 

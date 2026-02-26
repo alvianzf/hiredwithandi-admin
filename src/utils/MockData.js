@@ -42,6 +42,15 @@ export const INITIAL_DATA = {
       status: "Active",
     },
   ],
+  superadmins: [
+    {
+      id: "super_1",
+      email: "superadmin@example.com",
+      password: "Superadmin#123",
+      name: "Global Superadmin",
+      role: "superadmin",
+    },
+  ],
 };
 
 export const initializeMockData = () => {
@@ -52,7 +61,18 @@ export const initializeMockData = () => {
     );
   }
   if (!localStorage.getItem("hwa_admins")) {
-    localStorage.setItem("hwa_admins", JSON.stringify(INITIAL_DATA.admins));
+    // Inject the organizational admin role for previous users implicitly
+    const seededAdmins = INITIAL_DATA.admins.map((a) => ({
+      ...a,
+      role: "admin",
+    }));
+    localStorage.setItem("hwa_admins", JSON.stringify(seededAdmins));
+  }
+  if (!localStorage.getItem("hwa_superadmins")) {
+    localStorage.setItem(
+      "hwa_superadmins",
+      JSON.stringify(INITIAL_DATA.superadmins),
+    );
   }
   if (!localStorage.getItem("hwa_students")) {
     localStorage.setItem("hwa_students", JSON.stringify(INITIAL_DATA.students));

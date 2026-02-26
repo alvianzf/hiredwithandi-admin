@@ -57,9 +57,9 @@ It is designed to give Bootcamps, Universities, and Organizational partners an a
    The site defaults to `http://localhost:5173`.
 
 4. **Login Instructions**
-   Because this application relies on a Mock DB using `localStorage`, upon your first boot, an initialization script maps data to your browser. Use the default Mock Admin:
-   - **Email:** `test@example.com`
-   - **Password:** `User#123`
+   Because this application relies on a Mock DB using `localStorage`, upon your first boot, an initialization script maps data to your browser. Use the default Mock Credentials:
+   - **Org Admin:** `test@example.com` / `User#123`
+   - **Global Superadmin:** `superadmin@example.com` / `Superadmin#123`
 
 ## Project Structure
 
@@ -68,10 +68,13 @@ src/
 ├── components/          # Reusable UI parts (e.g., AdminLayout, Sidebar)
 ├── context/             # Global Providers (AuthContext handling mock login/sessions)
 ├── pages/
-│   ├── Dashboard.jsx    # Global overview metrics
-│   ├── Login.jsx        # Auth gateway
-│   ├── StudentsMgmt.jsx # Student data table & Modals
-│   ├── StudentView.jsx  # Individual student profile & PDF Generator
+│   ├── Dashboard.jsx        # Org-admin overview metrics
+│   ├── Login.jsx            # Auth gateway
+│   ├── OrganizationsMgmt.jsx # Superadmin tenant management
+│   ├── PlatformUsers.jsx    # Superadmin global user registry
+│   ├── StudentsMgmt.jsx     # Org-admin student data table & Modals
+│   ├── StudentView.jsx      # Individual student profile & PDF Generator
+│   ├── SuperDashboard.jsx   # Superadmin system overview
 ├── utils/
 │   ├── MockData.js      # Data seed arrays (Admins, Organizations, Students)
 ├── App.jsx              # Main routing & protected route wrappers
