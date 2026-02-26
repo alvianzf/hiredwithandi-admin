@@ -6,11 +6,18 @@ export default function OrganizationsMgmt() {
   const [organizations, setOrganizations] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [selectedOrg, setSelectedOrg] = useState(null);
   
   // New Org State
   const [orgName, setOrgName] = useState("");
   const [adminName, setAdminName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
+
+  // Edit Org State
+  const [editOrgName, setEditOrgName] = useState("");
+  const [newOrgAdminName, setNewOrgAdminName] = useState("");
+  const [newOrgAdminEmail, setNewOrgAdminEmail] = useState("");
 
   useEffect(() => {
     loadData();
@@ -51,8 +58,51 @@ export default function OrganizationsMgmt() {
     setOrgName(""); setAdminName(""); setAdminEmail("");
   };
 
-  const getAdminForOrg = (orgId) => {
-    return admins.find(a => a.orgId === orgId) || { name: "Unassigned", email: "N/A" };
+  const getAdminsForOrg = (orgId) => {
+    return admins.filter(a => a.orgId === orgId);
+  };
+
+  const openManageModal = (org) => {
+    setSelectedOrg(org);
+    setEditOrgName(org.name);
+    setIsManageModalOpen(true);
+  };
+
+  const handleUpdateOrg = (e) => {
+    e.preventDefault();
+    if (!selectedOrg || !editOrgName.trim()) return;
+
+    const updatedOrgs = organizations.map(o => 
+      o.id === selectedOrg.id ? { ...o, name: editOrgName } : o
+    );
+
+    localStorage.setItem('hwa_organizations', JSON.stringify(updatedOrgs));
+    setOrganizations(updatedOrgs);
+
+    if (newOrgAdminName && newOrgAdminEmail) {
+      const newAdmin = {
+        id: `admin_${Date.now()}`,
+        orgId: selectedOrg.id,
+        email: newOrgAdminEmail,
+        password: "User#123",
+        name: newOrgAdminName,
+        role: "admin"
+      };
+      const updatedAdmins = [...admins, newAdmin];
+      localStorage.setItem('hwa_admins', JSON.stringify(updatedAdmins));
+      setAdmins(updatedAdmins);
+    }
+
+    setIsManageModalOpen(false);
+    setSelectedOrg(null);
+    setNewOrgAdminName("");
+    setNewOrgAdminEmail("");
+  };
+
+  const removeAdmin = (adminId) => {
+    const updatedAdmins = admins.filter(a => a.id !== adminId);
+    localStorage.setItem('hwa_admins', JSON.stringify(updatedAdmins));
+    setAdmins(updatedAdmins);
   };
 
   return (
@@ -77,7 +127,7 @@ export default function OrganizationsMgmt() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
         {organizations.map(org => {
-          const orgAdmin = getAdminForOrg(org.id);
+          const orgAdmins = getAdminsForOrg(org.id);
           return (
             <div key={org.id} className="glass p-6 rounded-2xl flex flex-col shadow-lg border-t border-white/10 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-yellow)] rounded-full mix-blend-multiply filter blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
@@ -93,15 +143,28 @@ export default function OrganizationsMgmt() {
                 <div className="flex items-start gap-3">
                   <FiUsers className="text-[var(--text-secondary)] mt-1 shrink-0" />
                   <div>
-                    <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-wider">Primary Admin</p>
-                    <p className="font-medium text-[var(--text-primary)]">{orgAdmin.name}</p>
-                    <p className="text-sm text-blue-400">{orgAdmin.email}</p>
+                    <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-wider mb-2">Administrators ({orgAdmins.length})</p>
+                    <div className="space-y-2">
+                      {orgAdmins.length === 0 ? (
+                        <p className="font-medium text-[var(--text-secondary)] italic text-sm">No admins assigned</p>
+                      ) : (
+                        orgAdmins.map(admin => (
+                          <div key={admin.id} className="bg-black/5 dark:bg-white/5 p-2 rounded-lg border border-[var(--border-color)]">
+                            <p className="font-medium text-[var(--text-primary)] text-sm">{admin.name}</p>
+                            <p className="text-xs text-blue-400">{admin.email}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 pt-4 border-t border-[var(--border-color)] flex justify-end z-10">
-                <button className="text-sm flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--color-primary-yellow)] transition-colors">
+                <button 
+                  onClick={() => openManageModal(org)}
+                  className="text-sm flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--color-primary-yellow)] transition-colors"
+                >
                   <FiSettings size={14} /> Manage Settings
                 </button>
               </div>
@@ -179,6 +242,93 @@ export default function OrganizationsMgmt() {
                   className="px-6 py-2.5 rounded-xl font-bold bg-[var(--color-primary-yellow)] text-black hover:bg-[#e6a600] flex items-center gap-2 shadow-lg transition-transform hover:scale-105"
                 >
                   <FiCheck /> Create Organization
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Settings Modal */}
+      {isManageModalOpen && selectedOrg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
+          <div className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
+              <h3 className="text-xl font-bold text-[var(--text-primary)]">Manage Organization</h3>
+              <button 
+                onClick={() => setIsManageModalOpen(false)}
+                className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpdateOrg} className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Organization Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editOrgName}
+                  onChange={(e) => setEditOrgName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                  placeholder="Organization Name"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-[var(--border-color)]">
+                <label className="block text-sm font-bold text-[var(--text-secondary)] mb-3 uppercase tracking-wide">Current Administrators</label>
+                <div className="space-y-2 max-h-32 overflow-y-auto mb-4">
+                  {getAdminsForOrg(selectedOrg.id).map(admin => (
+                    <div key={admin.id} className="flex justify-between items-center bg-black/5 dark:bg-white/5 p-2 rounded-lg border border-[var(--border-color)]">
+                      <div>
+                        <p className="font-medium text-[var(--text-primary)] text-sm">{admin.name}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{admin.email}</p>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => removeAdmin(admin.id)}
+                        className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
+                        title="Remove Admin"
+                      >
+                        <FiX size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <label className="block text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Add New Administrator (Optional)</label>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={newOrgAdminName}
+                    onChange={(e) => setNewOrgAdminName(e.target.value)}
+                    className="w-full px-4 py-2 text-sm rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                    placeholder="New Admin Name"
+                  />
+                  <input
+                    type="email"
+                    value={newOrgAdminEmail}
+                    onChange={(e) => setNewOrgAdminEmail(e.target.value)}
+                    className="w-full px-4 py-2 text-sm rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                    placeholder="new.admin@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsManageModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl font-medium text-[var(--text-secondary)] hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl font-bold bg-[var(--color-primary-yellow)] text-black hover:bg-[#e6a600] flex items-center gap-2 shadow-lg transition-transform hover:scale-105"
+                >
+                  <FiCheck /> Save Changes
                 </button>
               </div>
             </form>

@@ -53,8 +53,28 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('hwa_admin_session');
   };
 
+  const updateProfile = (updatedFields) => {
+    if (!admin) return;
+    
+    // Update active session locally
+    const newSession = { ...admin, ...updatedFields };
+    setAdmin(newSession);
+    localStorage.setItem('hwa_admin_session', JSON.stringify(newSession));
+    
+    // Sync with the Mock DB Array
+    if (admin.isSuperadmin) {
+      const superadmins = JSON.parse(localStorage.getItem('hwa_superadmins') || '[]');
+      const updatedList = superadmins.map(s => s.id === admin.id ? { ...s, ...updatedFields } : s);
+      localStorage.setItem('hwa_superadmins', JSON.stringify(updatedList));
+    } else {
+      const admins = JSON.parse(localStorage.getItem('hwa_admins') || '[]');
+      const updatedList = admins.map(a => a.id === admin.id ? { ...a, ...updatedFields } : a);
+      localStorage.setItem('hwa_admins', JSON.stringify(updatedList));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ admin, login, logout, loading }}>
+    <AuthContext.Provider value={{ admin, login, logout, updateProfile, loading }}>
       {children}
     </AuthContext.Provider>
   );

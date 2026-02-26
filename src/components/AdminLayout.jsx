@@ -1,13 +1,25 @@
 import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { FiMenu, FiMoon, FiSun, FiUsers, FiPieChart, FiLogOut, FiBriefcase } from "react-icons/fi";
+import { FiMenu, FiMoon, FiSun, FiUsers, FiPieChart, FiLogOut, FiBriefcase, FiSettings, FiX, FiCheck } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true); // Default dark matching learnwithandi
   const location = useLocation();
-  const { admin, logout } = useAuth();
+  const { admin, logout, updateProfile } = useAuth();
+  
+  // Profile Modal State
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+
+  useEffect(() => {
+    if (admin) {
+      setEditName(admin.name);
+      setEditEmail(admin.email);
+    }
+  }, [admin]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -29,6 +41,14 @@ export default function AdminLayout() {
       ];
 
   const adminInitials = admin?.name ? admin.name.substring(0, 2).toUpperCase() : "AD";
+
+  const handleProfileUpdate = (e) => {
+    e.preventDefault();
+    if (!editName || !editEmail) return;
+    
+    updateProfile({ name: editName, email: editEmail });
+    setIsProfileModalOpen(false);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-color)] bg-doodle text-[var(--text-primary)] transition-colors duration-300">
@@ -96,10 +116,19 @@ export default function AdminLayout() {
             </button>
             
             <div className="flex items-center space-x-2 border-l border-[var(--border-color)] pl-4">
-              <div className="w-8 h-8 rounded-full bg-[var(--color-primary-red)] flex items-center justify-center text-white font-bold text-sm shadow-md">
-                {adminInitials}
-              </div>
-              <span className="font-medium hidden sm:block truncate max-w-[150px]">{admin?.organization?.name}</span>
+              <button 
+                onClick={() => setIsProfileModalOpen(true)}
+                className="flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/5 py-1 px-2 rounded-xl transition-colors text-left"
+                title="Manage Profile"
+              >
+                <div className="w-8 h-8 rounded-full bg-[var(--color-primary-red)] flex items-center justify-center text-white font-bold text-sm shadow-md">
+                  {adminInitials}
+                </div>
+                <div className="hidden sm:block">
+                  <span className="font-bold text-sm block leading-tight">{admin?.name}</span>
+                  <span className="text-xs text-[var(--text-secondary)] block truncate max-w-[120px]">{admin?.organization?.name || 'System Admin'}</span>
+                </div>
+              </button>
             </div>
           </div>
         </header>
@@ -109,6 +138,65 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Admin Personal Settings Modal */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
+          <div className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2"><FiSettings className="text-[var(--color-primary-yellow)]" /> My Profile Settings</h3>
+              <button 
+                onClick={() => setIsProfileModalOpen(false)}
+                className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleProfileUpdate} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Display Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                  placeholder="Your Name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                  placeholder="your.email@example.com"
+                />
+              </div>
+
+              <div className="pt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl font-medium text-[var(--text-secondary)] hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl font-bold bg-[var(--color-primary-yellow)] text-black hover:bg-[#e6a600] flex items-center gap-2 shadow-lg transition-transform hover:scale-105"
+                >
+                  <FiCheck /> Save Profile
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
