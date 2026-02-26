@@ -9,6 +9,10 @@ It is designed to give Bootcamps, Universities, and Organizational partners an a
 ## Features
 
 - **Multi-Tenant Architecture**: Login context specifically ties admins to their organization (e.g. _LearnWithAndi_, _Bootcamp B_) ensuring data privacy.
+- **Global Superadmin Console**:
+  - Manage all active organizations, including provisioning organizational administrators.
+  - Traverse all platform users across all organizations and globally edit/disable accounts. _Note: Superadmins do not have access to view individual student tracker details._
+  - View platform-wide statistics limited to _Total Active Organizations_ and _Total Platform Users_.
 - **Analytics Dashboard**:
   - Summary views on _Total/Active Users_, and mock _Job Offers_.
   - Global average timeline aggregations showing the velocity of students moving from _Wishlist → Applied → Interviewing → Offered_.

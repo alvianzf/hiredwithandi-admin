@@ -5,8 +5,7 @@ export default function SuperDashboard() {
   const [stats, setStats] = useState({ 
     totalOrgs: 0, 
     totalActiveAdmins: 0, 
-    totalPlatformUsers: 0,
-    totalJobActions: 0
+    totalPlatformUsers: 0
   });
 
   useEffect(() => {
@@ -17,8 +16,7 @@ export default function SuperDashboard() {
     setStats({
       totalOrgs: orgs.length,
       totalActiveAdmins: admins.length,
-      totalPlatformUsers: students.length,
-      totalJobActions: students.length * 15 + 42 // Mock multiplier
+      totalPlatformUsers: students.length
     });
   }, []);
 
@@ -31,7 +29,7 @@ export default function SuperDashboard() {
         <p className="text-[var(--text-secondary)] mt-1">Global HiredWithAndi platform metrics.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
         <div className="glass p-6 rounded-xl flex flex-col justify-center items-center shadow-lg transition-transform hover:scale-105 border-[var(--color-primary-yellow)] border-opacity-50">
           <h3 className="text-xs text-[var(--text-secondary)] font-bold mb-2 uppercase tracking-widest">Active Orgs</h3>
           <p className="text-5xl font-black text-[var(--color-primary-yellow)] text-center">{stats.totalOrgs}</p>
@@ -43,10 +41,6 @@ export default function SuperDashboard() {
         <div className="glass p-6 rounded-xl flex flex-col justify-center items-center shadow-lg transition-transform hover:scale-105 border-white/10 dark:border-white/5">
           <h3 className="text-xs text-[var(--text-secondary)] font-bold mb-2 uppercase tracking-widest">Platform Users</h3>
           <p className="text-5xl font-black text-blue-500 text-center">{stats.totalPlatformUsers}</p>
-        </div>
-        <div className="glass p-6 rounded-xl flex flex-col justify-center items-center shadow-lg transition-transform hover:scale-105 border-[var(--color-primary-red)] border-opacity-50">
-          <h3 className="text-xs text-[var(--text-secondary)] font-bold mb-2 uppercase tracking-widest">Job Actions</h3>
-          <p className="text-5xl font-black text-[var(--color-primary-red)] text-center">{stats.totalJobActions}</p>
         </div>
       </div>
 
