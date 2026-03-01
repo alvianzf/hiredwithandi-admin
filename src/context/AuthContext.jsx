@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { user, token } = response.data.data;
+      const { user, token, refreshToken } = response.data.data;
       
       if (!['ADMIN', 'SUPERADMIN'].includes(user.role)) {
         toast.error('Unauthorized: Administrative access only.');
@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }) => {
       const sessionData = { 
         ...user, 
         token,
+        refreshToken,
         isSuperadmin: user.role === 'SUPERADMIN',
         organization: user.organization 
       };
@@ -63,11 +64,12 @@ export const AuthProvider = ({ children }) => {
   const setupPassword = async (email, password) => {
     try {
       const response = await api.post('/auth/setup-password', { email, password }); // no app flag needed for admins
-      const { user, token } = response.data.data;
+      const { user, token, refreshToken } = response.data.data;
       
       const sessionData = { 
         ...user, 
         token,
+        refreshToken,
         isSuperadmin: user.role === 'SUPERADMIN',
         organization: user.organization 
       };
