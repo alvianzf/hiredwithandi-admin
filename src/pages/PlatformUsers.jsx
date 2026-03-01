@@ -128,7 +128,7 @@ export default function PlatformUsers() {
           onClick={() => setIsCreateModalOpen(true)}
           className="flex items-center gap-2 bg-[var(--color-primary-red)] text-white px-5 py-2.5 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg"
         >
-          <FiUserPlus /> Add Administrator
+          <FiUserPlus /> Add User
         </button>
       </div>
 
@@ -257,10 +257,10 @@ export default function PlatformUsers() {
 
       {/* Create User Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
-          <div className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+        <div onClick={() => setIsCreateModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
             <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
-              <h3 className="text-xl font-bold text-[var(--color-primary-red)] flex items-center gap-2"><FiShield /> Add Administrator</h3>
+              <h3 className="text-xl font-bold text-[var(--color-primary-red)] flex items-center gap-2"><FiShield /> Add User</h3>
               <button 
                 onClick={() => setIsCreateModalOpen(false)}
                 className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
@@ -345,8 +345,8 @@ export default function PlatformUsers() {
 
       {/* Edit User Modal */}
       {isEditModalOpen && editUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glass w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div onClick={() => { setIsEditModalOpen(false); setEditUser(null); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
               <h3 className="text-xl font-bold">Edit User</h3>
               <button 

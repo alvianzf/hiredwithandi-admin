@@ -140,8 +140,8 @@ export default function AdminLayout() {
 
       {/* Admin Personal Settings Modal */}
       {isProfileModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
-          <div className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+        <div onClick={() => setIsProfileModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
             <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
               <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2"><FiSettings className="text-[var(--color-primary-yellow)]" /> My Profile Settings</h3>
               <button 

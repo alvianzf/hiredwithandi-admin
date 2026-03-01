@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FiPlus, FiBriefcase, FiUsers, FiSettings, FiCheck, FiX, FiAlertCircle } from "react-icons/fi";
 import { toast } from "sonner";
+import Swal from "sweetalert2";
 import api from "../utils/api";
 
 export default function OrganizationsMgmt() {
@@ -111,6 +112,69 @@ export default function OrganizationsMgmt() {
     }
   };
 
+  const handleToggleOrgStatus = async (orgToggle = selectedOrg) => {
+    if (!orgToggle) return;
+    const newStatus = orgToggle.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Do you want to ${newStatus.toLowerCase()} ${orgToggle.name}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#eab308',
+      cancelButtonColor: 'rgba(255, 255, 255, 0.1)',
+      confirmButtonText: 'Yes, proceed!',
+      background: 'rgba(23, 23, 23, 0.9)',
+      color: '#fff',
+      customClass: {
+        popup: 'rounded-2xl border border-[var(--border-color)] backdrop-blur-md',
+        cancelButton: 'text-white border border-[var(--border-color)]',
+      }
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+      await api.patch(`/organizations/${orgToggle.id}`, { status: newStatus });
+      toast.success(`Organization ${newStatus.toLowerCase()}`);
+      loadData();
+      if (selectedOrg && selectedOrg.id === orgToggle.id) {
+        setIsManageModalOpen(false);
+        setSelectedOrg(null);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to update organization status");
+    }
+  };
+
+  const handleDeleteOrg = async () => {
+    if (!selectedOrg) return;
+    const result = await Swal.fire({
+      title: 'CRITICAL WARNING',
+      text: `Are you sure you want to permanently delete ${selectedOrg.name}? This will remove all associated users and data. This action cannot be undone.`,
+      icon: 'error',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: 'rgba(255, 255, 255, 0.1)',
+      confirmButtonText: 'Yes, delete permanently!',
+      background: 'rgba(23, 23, 23, 0.9)',
+      color: '#fff',
+      customClass: {
+        popup: 'rounded-2xl border border-[var(--border-color)] backdrop-blur-md',
+        cancelButton: 'text-white border border-[var(--border-color)]',
+      }
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+      await api.delete(`/organizations/${selectedOrg.id}`);
+      toast.success("Organization deleted permanently");
+      loadData();
+      setIsManageModalOpen(false);
+      setSelectedOrg(null);
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to delete organization");
+    }
+  };
+
   return (
     <div className="space-y-6 pb-12">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -139,10 +203,11 @@ export default function OrganizationsMgmt() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-yellow)] rounded-full mix-blend-multiply filter blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
               
               <h3 className="text-xl font-black text-[var(--text-primary)] mb-4 pb-4 border-b border-[var(--border-color)] flex items-center gap-2 z-10">
-                <span className="w-8 h-8 rounded-lg bg-[var(--color-primary-yellow)] text-black flex items-center justify-center text-sm">
+                <span className={`w-8 h-8 rounded-lg text-black flex items-center justify-center text-sm ${org.status === 'DISABLED' ? 'bg-gray-500' : 'bg-[var(--color-primary-yellow)]'}`}>
                   {org.name.charAt(0)}
                 </span>
-                {org.name}
+                <span className={org.status === 'DISABLED' ? 'line-through opacity-50' : ''}>{org.name}</span>
+                {org.status === 'DISABLED' && <span className="ml-auto text-xs bg-red-500/20 text-red-500 px-2 py-1 rounded-full uppercase font-bold tracking-wider">Disabled</span>}
               </h3>
               
               <div className="space-y-3 z-10 flex-1">
@@ -166,7 +231,15 @@ export default function OrganizationsMgmt() {
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-[var(--border-color)] flex justify-end z-10">
+              <div className="mt-6 pt-4 border-t border-[var(--border-color)] flex justify-between items-center z-10 gap-4">
+                <button 
+                  onClick={() => handleToggleOrgStatus(org)}
+                  className={`text-sm flex items-center gap-2 font-medium transition-colors ${org.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'}`}
+                  title={org.status === 'ACTIVE' ? 'Disable Organization' : 'Enable Organization'}
+                >
+                  {org.status === 'ACTIVE' ? <FiX size={14} /> : <FiAlertCircle size={14} />} 
+                  {org.status === 'ACTIVE' ? 'Disable' : 'Enable'}
+                </button>
                 <button 
                   onClick={() => openManageModal(org)}
                   className="text-sm flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--color-primary-yellow)] transition-colors"
@@ -181,8 +254,8 @@ export default function OrganizationsMgmt() {
 
       {/* Create Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
-          <div className="glass w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+        <div onClick={() => setIsModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
             <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
               <h3 className="text-xl font-bold text-[var(--color-primary-yellow)]">Onboard New Organization</h3>
               <button 
@@ -257,8 +330,8 @@ export default function OrganizationsMgmt() {
 
       {/* Manage Settings Modal */}
       {isManageModalOpen && selectedOrg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
-          <div className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+        <div onClick={() => setIsManageModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
             <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
               <h3 className="text-xl font-bold text-[var(--text-primary)]">Manage Organization</h3>
               <button 
@@ -322,7 +395,27 @@ export default function OrganizationsMgmt() {
                 </div>
               </div>
 
-              <div className="pt-6 flex justify-end gap-3">
+              <div className="pt-4 border-t border-[var(--border-color)]">
+                <label className="block text-xs font-bold text-red-500 mb-2 uppercase tracking-wide">Danger Zone</label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleToggleOrgStatus}
+                    className="flex-1 py-2 rounded-xl text-sm font-bold border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors"
+                  >
+                    {selectedOrg.status === 'ACTIVE' ? 'Disable Organization' : 'Enable Organization'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteOrg}
+                    className="flex-1 py-2 rounded-xl text-sm font-bold bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                  >
+                    Delete Permanently
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-6 flex justify-end gap-3 border-t border-[var(--border-color)] mt-6">
                 <button
                   type="button"
                   onClick={() => setIsManageModalOpen(false)}
