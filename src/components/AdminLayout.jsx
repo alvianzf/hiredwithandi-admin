@@ -116,6 +116,17 @@ export default function AdminLayout() {
           {isSidebarOpen && <span className="font-bold text-xl tracking-tight text-[var(--color-primary-yellow)] truncate">HiredWithAndi</span>}
         </div>
 
+        {isSidebarOpen && (
+          <div className="px-4 py-3 border-b border-[var(--border-color)] bg-black/5 dark:bg-white/5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">
+              {admin?.isSuperadmin ? 'System Admin' : 'Organization'}
+            </p>
+            <p className="text-sm font-bold text-[var(--text-primary)] truncate mt-0.5">
+              {admin?.isSuperadmin ? 'Global Access' : (admin?.organization?.name || 'Unknown Org')}
+            </p>
+          </div>
+        )}
+
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-2 px-3">
             {navLinks.map((link) => {
