@@ -255,7 +255,7 @@ export default function AdminLayout() {
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="Preview" className="h-full w-full object-cover" />
                   ) : admin?.avatarUrl ? (
-                    <img src={admin.avatarUrl.startsWith('/') ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}${admin.avatarUrl}` : admin.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    <img src={admin.avatarUrl.startsWith('/') ? `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}${admin.avatarUrl}` : admin.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-2xl font-bold text-[var(--text-secondary)]">
                       {adminInitials}
