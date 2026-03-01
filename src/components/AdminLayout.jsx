@@ -216,8 +216,12 @@ export default function AdminLayout() {
                 className="flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/5 py-1 px-2 rounded-xl transition-colors text-left"
                 title="Manage Profile"
               >
-                <div className="w-8 h-8 rounded-full bg-[var(--color-primary-red)] flex items-center justify-center text-white font-bold text-sm shadow-md">
-                  {adminInitials}
+                <div className="w-8 h-8 rounded-full bg-[var(--color-primary-red)] flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden border border-white/10">
+                  {admin?.avatarUrl ? (
+                    <img src={admin.avatarUrl.startsWith('/') ? `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}${admin.avatarUrl}` : admin.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    adminInitials
+                  )}
                 </div>
                 <div className="hidden sm:block">
                   <span className="font-bold text-sm block leading-tight">{admin?.name}</span>
