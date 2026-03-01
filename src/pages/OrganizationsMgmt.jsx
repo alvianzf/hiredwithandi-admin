@@ -11,6 +11,7 @@ export default function OrganizationsMgmt() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState(null);
+  const [batches, setBatches] = useState([]);
   
   // New Org State
   const [orgName, setOrgName] = useState("");
@@ -21,6 +22,9 @@ export default function OrganizationsMgmt() {
   const [editOrgName, setEditOrgName] = useState("");
   const [newOrgAdminName, setNewOrgAdminName] = useState("");
   const [newOrgAdminEmail, setNewOrgAdminEmail] = useState("");
+
+  // Create Batch State
+  const [newBatchName, setNewBatchName] = useState("");
 
   useEffect(() => {
     loadData();
@@ -67,10 +71,58 @@ export default function OrganizationsMgmt() {
     return admins.filter(a => a.orgId === orgId);
   };
 
-  const openManageModal = (org) => {
+  const openManageModal = async (org) => {
     setSelectedOrg(org);
     setEditOrgName(org.name);
     setIsManageModalOpen(true);
+    await loadBatches(org.id);
+  };
+
+  const loadBatches = async (orgId) => {
+    try {
+      const res = await api.get(`/organizations/${orgId}/batches`);
+      setBatches(res.data.data);
+    } catch {
+      toast.error("Failed to load batches");
+    }
+  };
+
+  const handleCreateBatch = async () => {
+    if (!newBatchName.trim() || !selectedOrg) return;
+    try {
+      await api.post(`/organizations/${selectedOrg.id}/batches`, { name: newBatchName });
+      toast.success("Batch created successfully");
+      setNewBatchName("");
+      loadBatches(selectedOrg.id);
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to create batch");
+    }
+  };
+
+  const handleDeleteBatch = async (batchId, batchName) => {
+    const result = await Swal.fire({
+      title: 'Delete Batch?',
+      text: `Are you sure you want to delete "${batchName}"? Users in this batch will be unassigned.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      confirmButtonText: 'Yes, delete!',
+      background: 'rgba(23, 23, 23, 0.9)',
+      color: '#fff',
+      customClass: {
+        popup: 'rounded-2xl border border-[var(--border-color)] backdrop-blur-md',
+      }
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/batches/${batchId}`);
+        toast.success("Batch deleted");
+        loadBatches(selectedOrg.id);
+      } catch (error) {
+        toast.error("Failed to delete batch");
+      }
+    }
   };
 
   const handleUpdateOrg = async (e) => {
@@ -139,6 +191,7 @@ export default function OrganizationsMgmt() {
       if (selectedOrg && selectedOrg.id === orgToggle.id) {
         setIsManageModalOpen(false);
         setSelectedOrg(null);
+        setBatches([]);
       }
     } catch (error) {
       toast.error(error.response?.data?.error?.message || "Failed to update organization status");
@@ -170,6 +223,7 @@ export default function OrganizationsMgmt() {
       loadData();
       setIsManageModalOpen(false);
       setSelectedOrg(null);
+      setBatches([]);
     } catch (error) {
       toast.error(error.response?.data?.error?.message || "Failed to delete organization");
     }
@@ -392,6 +446,51 @@ export default function OrganizationsMgmt() {
                     className="w-full px-4 py-2 text-sm rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
                     placeholder="new.admin@example.com"
                   />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[var(--border-color)]">
+                <label className="block text-sm font-bold text-[var(--text-secondary)] mb-3 uppercase tracking-wide">Organization Batches</label>
+                <div className="space-y-2 max-h-32 overflow-y-auto mb-4">
+                  {batches.length === 0 ? (
+                    <p className="text-sm text-[var(--text-secondary)] italic">No batches configured</p>
+                  ) : (
+                    batches.map(batch => (
+                      <div key={batch.id} className="flex justify-between items-center bg-black/5 dark:bg-white/5 p-2 rounded-lg border border-[var(--border-color)]">
+                        <div>
+                          <p className="font-medium text-[var(--text-primary)] text-sm">{batch.name}</p>
+                          <p className="text-xs text-[var(--text-secondary)]">{batch._count?.users || 0} members</p>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={() => handleDeleteBatch(batch.id, batch.name)}
+                          className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
+                          title="Delete Batch"
+                        >
+                          <FiX size={16} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <label className="block text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Create New Batch</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newBatchName}
+                    onChange={(e) => setNewBatchName(e.target.value)}
+                    className="flex-1 px-4 py-2 text-sm rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                    placeholder="e.g. Fall 2024"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateBatch}
+                    disabled={!newBatchName.trim()}
+                    className="px-4 py-2 bg-[var(--color-primary-yellow)] text-black font-bold rounded-xl hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center shrink-0"
+                  >
+                    <FiPlus />
+                  </button>
                 </div>
               </div>
 

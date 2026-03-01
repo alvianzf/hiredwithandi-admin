@@ -11,17 +11,31 @@ export default function MembersMgmt() {
   const [members, setMembers] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [batchFilter, setBatchFilter] = useState("");
+  const [batches, setBatches] = useState([]);
   
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newMember, setNewMember] = useState({ name: "", email: "" });
+  const [newMember, setNewMember] = useState({ name: "", email: "", batchId: "" });
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editMember, setEditMember] = useState(null);
 
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [csvBatchId, setCsvBatchId] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState("");
+
+  const loadBatches = useCallback(async () => {
+    if (admin?.orgId) {
+      try {
+        const res = await api.get(`/organizations/${admin.orgId}/batches`);
+        setBatches(res.data.data || []);
+      } catch {
+        console.error("Failed to load batches");
+      }
+    }
+  }, [admin]);
 
   const loadMembers = useCallback(async () => {
     if (admin) {
@@ -32,11 +46,12 @@ export default function MembersMgmt() {
         toast.error("Failed to load members");
       }
     }
-  }, [admin]);
+  }, [admin, batchFilter]);
 
   useEffect(() => {
+    loadBatches();
     loadMembers();
-  }, [loadMembers]);
+  }, [loadBatches, loadMembers]);
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
@@ -46,12 +61,13 @@ export default function MembersMgmt() {
       await api.post('/users', {
         name: newMember.name,
         email: newMember.email,
+        batchId: newMember.batchId || undefined,
         role: "MEMBER",
         orgId: admin.orgId
       });
       toast.success("Member created successfully");
       loadMembers();
-      setNewMember({ name: "", email: "" });
+      setNewMember({ name: "", email: "", batchId: "" });
       setIsCreateModalOpen(false);
     } catch (error) {
       toast.error(error.response?.data?.error?.message || "Failed to create member");
@@ -70,7 +86,8 @@ export default function MembersMgmt() {
     try {
       await api.patch(`/users/${editMember.id}`, {
         name: editMember.name,
-        email: editMember.email
+        email: editMember.email,
+        batchId: editMember.batchId || null
       });
       toast.success("Member updated successfully");
       loadMembers();
@@ -119,6 +136,7 @@ export default function MembersMgmt() {
             orgId: admin.orgId,
             name,
             email,
+            batchId: csvBatchId || undefined,
             status: 'Active'
           };
         }).filter(Boolean);
@@ -156,7 +174,8 @@ export default function MembersMgmt() {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
                           s.email.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "All" || s.status === statusFilter.toUpperCase();
-    return matchesSearch && matchesStatus;
+    const matchesBatch = !batchFilter || s.batchId === batchFilter;
+    return matchesSearch && matchesStatus && matchesBatch;
   });
 
   return (
@@ -204,6 +223,16 @@ export default function MembersMgmt() {
             <option value="Active">Active</option>
             <option value="Disabled">Disabled</option>
           </select>
+          <select
+            value={batchFilter}
+            onChange={(e) => setBatchFilter(e.target.value)}
+            className="w-full md:w-56 px-4 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
+          >
+            <option value="">All Batches</option>
+            {batches.map(b => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
         </div>
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse">
@@ -211,6 +240,7 @@ export default function MembersMgmt() {
               <tr className="bg-black/5 dark:bg-white/5 border-b border-[var(--border-color)]">
                 <th className="p-4 font-semibold">Name</th>
                 <th className="p-4 font-semibold">Email</th>
+                <th className="p-4 font-semibold">Batch</th>
                 <th className="p-4 font-semibold">Status</th>
                 <th className="p-4 font-semibold">Last Logged In</th>
                 <th className="p-4 font-semibold text-center">Actions</th>
@@ -219,7 +249,7 @@ export default function MembersMgmt() {
             <tbody>
               {filteredMembers.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="p-8 text-center text-[var(--text-secondary)]">
+                  <td colSpan="6" className="p-8 text-center text-[var(--text-secondary)]">
                     No members found.
                   </td>
                 </tr>
@@ -228,6 +258,7 @@ export default function MembersMgmt() {
                   <tr key={member.id} className={`border-b border-[var(--border-color)] ${member.status === 'DISABLED' ? 'opacity-50' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
                     <td className="p-4 font-medium">{member.name}</td>
                     <td className="p-4 text-[var(--text-secondary)]">{member.email}</td>
+                    <td className="p-4 text-[var(--text-secondary)]">{member.batch?.name || "-"}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                         member.status === 'ACTIVE' 
@@ -308,6 +339,19 @@ export default function MembersMgmt() {
                   placeholder="john@example.com"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Assign to Batch (Optional)</label>
+                <select
+                  value={newMember.batchId}
+                  onChange={e => setNewMember({...newMember, batchId: e.target.value})}
+                  className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors text-[var(--text-primary)]"
+                >
+                  <option value="">None</option>
+                  {batches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
 
               <div className="pt-4 flex justify-end space-x-3">
                 <button 
@@ -365,6 +409,19 @@ export default function MembersMgmt() {
                   onChange={e => setEditMember({...editMember, email: e.target.value})}
                   className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Assign to Batch</label>
+                <select
+                  value={editMember.batchId || ""}
+                  onChange={e => setEditMember({...editMember, batchId: e.target.value})}
+                  className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors text-[var(--text-primary)]"
+                >
+                  <option value="">None</option>
+                  {batches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="pt-4 flex justify-end space-x-3">
@@ -435,6 +492,20 @@ export default function MembersMgmt() {
                   <span>{uploadSuccess}</span>
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Assign to Batch (Optional)</label>
+                <select
+                  value={csvBatchId}
+                  onChange={e => setCsvBatchId(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors text-[var(--text-primary)]"
+                >
+                  <option value="">None</option>
+                  {batches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
 
               <div className="flex justify-center items-center w-full">
                 <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-[var(--border-color)] border-dashed rounded-lg cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">

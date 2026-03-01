@@ -6,24 +6,42 @@ export default function Dashboard() {
   const { admin } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  const [batches, setBatches] = useState([]);
+  const [selectedBatchId, setSelectedBatchId] = useState("");
 
   useEffect(() => {
-    async function fetchStats() {
-      if (admin?.organization?.id) {
-        try {
-          const res = await api.get(`/organizations/${admin.organization.id}/stats`);
-          setStats(res.data.data);
-        } catch (error) {
-          console.error("Failed to load dashboard stats", error);
-        } finally {
-          setLoading(false);
+    async function loadData() {
+      if (!admin?.organization?.id) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        // Load batches (only once if batches is empty, but for simplicity we can load it here)
+        if (batches.length === 0) {
+          try {
+            const batchRes = await api.get(`/organizations/${admin.organization.id}/batches`);
+            setBatches(batchRes.data.data || []);
+          } catch (e) {
+            console.error("Failed to load batches");
+          }
         }
-      } else {
+        
+        let url = `/organizations/${admin.organization.id}/stats`;
+        if (selectedBatchId) url += `?batchId=${selectedBatchId}`;
+        
+        const res = await api.get(url);
+        setStats(res.data.data);
+      } catch (error) {
+        console.error("Failed to load dashboard stats", error);
+      } finally {
         setLoading(false);
       }
     }
-    fetchStats();
-  }, [admin]);
+    loadData();
+  }, [admin, selectedBatchId]);
 
   const statsWithDefaults = stats || {
     memberCount: 0,
@@ -38,11 +56,27 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 pb-12">
-      <div>
-        <h1 className="text-3xl font-bold text-[var(--color-primary-yellow)]">
-          Dashboard
-        </h1>
-        <p className="text-[var(--text-secondary)] mt-1">Overview of {admin?.organization?.name || "your organization"}&apos;s performance.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-[var(--color-primary-yellow)]">
+            Dashboard
+          </h1>
+          <p className="text-[var(--text-secondary)] mt-1">Overview of {admin?.organization?.name || "your organization"}&apos;s performance.</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-bold text-[var(--text-secondary)] uppercase">Filter</label>
+          <select
+            value={selectedBatchId}
+            onChange={(e) => setSelectedBatchId(e.target.value)}
+            className="px-4 py-2 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent outline-none min-w-[150px]"
+          >
+            <option value="">All Batches</option>
+            {batches.map(b => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Top Value Cards */}
