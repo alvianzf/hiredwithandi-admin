@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "../utils/api";
+import { toast } from "sonner";
 
 /* eslint-disable react/prop-types */
 
@@ -34,9 +35,11 @@ export const AuthProvider = ({ children }) => {
       
       setAdmin(sessionData);
       localStorage.setItem('hwa_admin_session', JSON.stringify(sessionData));
+      toast.success('Logged in successfully!');
       return true;
     } catch (error) {
       console.error('Login failed:', error);
+      toast.error(error.response?.data?.error?.message || 'Login failed');
       return false;
     }
   };
@@ -44,6 +47,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setAdmin(null);
     localStorage.removeItem('hwa_admin_session');
+    toast.info('Logged out');
   };
 
   const updateProfile = async (updatedFields) => {
@@ -56,8 +60,10 @@ export const AuthProvider = ({ children }) => {
       const newSession = { ...admin, ...response.data.data, token: admin.token };
       setAdmin(newSession);
       localStorage.setItem('hwa_admin_session', JSON.stringify(newSession));
+      toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Profile update failed', error);
+      toast.error(error.response?.data?.error?.message || 'Failed to update profile');
       throw error;
     }
   };
