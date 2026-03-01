@@ -24,31 +24,35 @@ const DashboardRouter = () => {
 };
 
 import NotFound from "./pages/NotFound";
+import { Toaster } from 'sonner';
 
 function App() {
   const { admin } = useAuth();
 
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/" element={
-        <ProtectedRoute>
-          <AdminLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<DashboardRouter />} />
-        
-        {/* Org Admin Routes */}
-        <Route path="students" element={admin?.isSuperadmin ? <Navigate to="/platform-users" replace /> : <StudentsMgmt />} />
-        <Route path="students/:id" element={<StudentView />} />
+    <>
+      <Toaster position="top-right" richColors theme="dark" />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<DashboardRouter />} />
+          
+          {/* Org Admin Routes */}
+          <Route path="students" element={admin?.isSuperadmin ? <Navigate to="/platform-users" replace /> : <StudentsMgmt />} />
+          <Route path="students/:id" element={<StudentView />} />
 
-        {/* Superadmin Routes */}
-        <Route path="organizations" element={admin?.isSuperadmin ? <OrganizationsMgmt /> : <Navigate to="/" replace />} />
-        <Route path="platform-users" element={admin?.isSuperadmin ? <PlatformUsers /> : <Navigate to="/" replace />} />
-      </Route>
-      {/* 404 Catch All */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+          {/* Superadmin Routes */}
+          <Route path="organizations" element={admin?.isSuperadmin ? <OrganizationsMgmt /> : <Navigate to="/" replace />} />
+          <Route path="platform-users" element={admin?.isSuperadmin ? <PlatformUsers /> : <Navigate to="/" replace />} />
+        </Route>
+        {/* 404 Catch All */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }
 
