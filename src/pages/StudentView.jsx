@@ -18,11 +18,9 @@ export default function StudentView() {
     const fetchStudentData = async () => {
       setLoading(true);
       try {
-        // Find basic user details from localStorage cache
-        const allStudents = JSON.parse(localStorage.getItem('hwa_students') || '[]');
-        const found = allStudents.find(s => s.id === id);
-        
-        if (found) setStudent(found);
+        // Fetch basic student profile from API
+        const studentRes = await api.get(`/students/${id}`);
+        setStudent(studentRes.data.data);
 
         // Fetch their specific job analytics stats and jobs in parallel
         const [statsRes, jobsRes] = await Promise.allSettled([
