@@ -64,6 +64,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         console.error("Token refresh failed", refreshError);
         localStorage.removeItem("hwa_admin_session");
+        window.location.reload();
       }
     }
     return Promise.reject(error);
