@@ -14,6 +14,8 @@ export default function AdminLayout() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   
   // Password Change State
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -44,8 +46,18 @@ export default function AdminLayout() {
       setShowCurrentPassword(false);
       setShowNewPassword(false);
       setShowConfirmPassword(false);
+      
+      // Reset avatar preview when closed
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      
+      // Reset text inputs to match their original values
+      if (admin) {
+        setEditName(admin.name);
+        setEditEmail(admin.email);
+      }
     }
-  }, [isProfileModalOpen]);
+  }, [isProfileModalOpen, admin]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -96,12 +108,31 @@ export default function AdminLayout() {
     }
   };
 
-  const handleProfileUpdate = (e) => {
+  const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    if (!editName || !editEmail) return;
     
-    updateProfile({ name: editName, email: editEmail });
-    setIsProfileModalOpen(false);
+    let submissionData = { name: editName, email: editEmail };
+    if (avatarFile) {
+      submissionData = new FormData();
+      submissionData.append('name', editName);
+      submissionData.append('email', editEmail);
+      submissionData.append('avatar', avatarFile);
+    }
+
+    try {
+      await updateProfile(submissionData);
+      setIsProfileModalOpen(false);
+    } catch (e) {
+      // toast already shown in context
+    }
+  };
+
+  const handleAvatarSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   return (
@@ -218,15 +249,32 @@ export default function AdminLayout() {
             </div>
             
             <form onSubmit={handleProfileUpdate} className="p-6 space-y-4">
+              
+              <div className="flex flex-col items-center gap-3 pb-2">
+                <div className="relative h-20 w-20 rounded-full border-2 border-[var(--border-color)] overflow-hidden bg-black/10 dark:bg-white/10 flex items-center justify-center">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Preview" className="h-full w-full object-cover" />
+                  ) : admin?.avatarUrl ? (
+                    <img src={admin.avatarUrl.startsWith('/') ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}${admin.avatarUrl}` : admin.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-bold text-[var(--text-secondary)]">
+                      {adminInitials}
+                    </span>
+                  )}
+                </div>
+                <label className="cursor-pointer text-xs font-bold text-[var(--color-primary-yellow)] hover:underline uppercase tracking-wide">
+                  Change Photo
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} />
+                </label>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Display Name</label>
                 <input
                   type="text"
-                  required
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
-                  placeholder="Your Name"
+                  value={admin?.name || ''}
+                  disabled
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] opacity-60 cursor-not-allowed"
                 />
               </div>
 
@@ -234,13 +282,33 @@ export default function AdminLayout() {
                 <label className="block text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Email Address</label>
                 <input
                   type="email"
-                  required
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
-                  placeholder="your.email@example.com"
+                  value={admin?.email || ''}
+                  disabled
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] opacity-60 cursor-not-allowed"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Role</label>
+                <input
+                  type="text"
+                  value={admin?.isSuperadmin ? 'System Admin' : 'Admin'}
+                  disabled
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] opacity-60 cursor-not-allowed"
+                />
+              </div>
+
+              {!admin?.isSuperadmin && (
+                <div>
+                  <label className="block text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Organization</label>
+                  <input
+                    type="text"
+                    value={admin?.organization?.name || ''}
+                    disabled
+                    className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] opacity-60 cursor-not-allowed"
+                  />
+                </div>
+              )}
 
               <div className="pt-4 border-t border-[var(--border-color)]">
                 {!isChangingPassword ? (

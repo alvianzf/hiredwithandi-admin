@@ -91,12 +91,14 @@ export const AuthProvider = ({ children }) => {
     toast.info('Logged out');
   };
 
-  const updateProfile = async (updatedFields) => {
+  const updateProfile = async (formDataOrFields) => {
     if (!admin) return;
     
     try {
-      // NOTE: We'll assume a /profile endpoint exists on the backend
-      const response = await api.patch('/profile', updatedFields);
+      const isFormData = formDataOrFields instanceof FormData;
+      const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+
+      const response = await api.patch('/profile', formDataOrFields, config);
       // Update active session locally
       const newSession = { ...admin, ...response.data.data, token: admin.token };
       setAdmin(newSession);
