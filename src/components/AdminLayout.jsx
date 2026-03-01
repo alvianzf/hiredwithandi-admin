@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { FiMenu, FiMoon, FiSun, FiUsers, FiPieChart, FiLogOut, FiBriefcase, FiSettings, FiX, FiCheck } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
+import api from "../utils/api";
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -13,6 +14,13 @@ export default function AdminLayout() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  
+  // Password Change State
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordStatus, setPasswordStatus] = useState({ type: '', message: '' });
 
   useEffect(() => {
     if (admin) {
@@ -20,6 +28,16 @@ export default function AdminLayout() {
       setEditEmail(admin.email);
     }
   }, [admin]);
+
+  useEffect(() => {
+    if (!isProfileModalOpen) {
+      setIsChangingPassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordStatus({ type: '', message: '' });
+    }
+  }, [isProfileModalOpen]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -41,6 +59,34 @@ export default function AdminLayout() {
       ];
 
   const adminInitials = admin?.name ? admin.name.substring(0, 2).toUpperCase() : "AD";
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus({ type: 'error', message: 'Passwords do not match' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordStatus({ type: 'error', message: 'New password must be at least 6 characters' });
+      return;
+    }
+
+    try {
+      setPasswordStatus({ type: 'loading', message: 'Changing password...' });
+      await api.post('/auth/change-password', {
+        currentPassword,
+        newPassword
+      });
+      setPasswordStatus({ type: 'success', message: 'Password changed successfully!' });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setIsChangingPassword(false), 2000);
+    } catch (err) {
+      const msg = err.response?.data?.error?.message || 'Failed to change password';
+      setPasswordStatus({ type: 'error', message: msg });
+    }
+  };
 
   const handleProfileUpdate = (e) => {
     e.preventDefault();
@@ -177,7 +223,85 @@ export default function AdminLayout() {
                 />
               </div>
 
-              <div className="pt-6 flex justify-end gap-3">
+              <div className="pt-4 border-t border-[var(--border-color)]">
+                {!isChangingPassword ? (
+                  <button 
+                    type="button"
+                    onClick={() => setIsChangingPassword(true)}
+                    className="text-xs font-bold text-[var(--color-primary-yellow)] hover:underline uppercase tracking-wide flex items-center gap-2"
+                  >
+                    <FiSettings size={14} /> Change Password
+                  </button>
+                ) : (
+                  <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-xs font-bold text-[var(--color-primary-yellow)] uppercase tracking-wide">Security Update</h4>
+                      <button 
+                        type="button"
+                        onClick={() => setIsChangingPassword(false)}
+                        className="text-xs text-[var(--text-secondary)] hover:text-white"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Current Password</label>
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border-color)] bg-black/10 dark:bg-white/5 text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                        placeholder="••••••••"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-[var(--text-secondary)] mb-1 uppercase tracking-wide">New Password</label>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border border-[var(--border-color)] bg-black/10 dark:bg-white/5 text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                          placeholder="••••••••"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Confirm New</label>
+                        <input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border border-[var(--border-color)] bg-black/10 dark:bg-white/5 text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                          placeholder="••••••••"
+                        />
+                      </div>
+                    </div>
+
+                    {passwordStatus.message && (
+                      <div className={`p-2 rounded-lg text-xs font-medium border ${
+                        passwordStatus.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 
+                        passwordStatus.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
+                        'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                      }`}>
+                        {passwordStatus.message}
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handlePasswordChange}
+                      disabled={passwordStatus.type === 'loading'}
+                      className="w-full py-2 rounded-lg font-bold bg-white/10 text-white hover:bg-white/20 transition-all text-xs disabled:opacity-50"
+                    >
+                      {passwordStatus.type === 'loading' ? 'Processing...' : 'Update Password Securely'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-6 flex justify-end gap-3 border-t border-[var(--border-color)]">
                 <button
                   type="button"
                   onClick={() => setIsProfileModalOpen(false)}
