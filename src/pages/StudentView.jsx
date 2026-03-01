@@ -51,29 +51,23 @@ export default function StudentView() {
         windowWidth: reportRef.current.scrollWidth,
         windowHeight: reportRef.current.scrollHeight,
         onclone: (clonedDoc) => {
-          // Comprehensive fix for html2canvas failing on Tailwind 4 oklch() colors.
-          // This recursively scans the entire cloned document for oklch definitions.
+          // Exhaustive fix for html2canvas failing on Tailwind 4 oklch() colors.
+          // This replaces ALL occurrences in the cloned document's styles and HTML.
           const oklchRegex = /oklch\s*\([^)]+\)/gi;
-          const fallback = 'rgb(100, 100, 100)';
+          const fallback = 'currentColor';
           
-          const walk = (node) => {
-            if (node.nodeType === 1) { // Element
-              // Patch STYLE tags
-              if (node.tagName === 'STYLE') {
-                node.textContent = node.textContent.replace(oklchRegex, fallback);
-              }
-              // Patch inline style attributes
-              const style = node.getAttribute('style');
-              if (style && oklchRegex.test(style)) {
-                node.setAttribute('style', style.replace(oklchRegex, fallback));
-              }
-              // Recursively walk children
-              for (let i = 0; i < node.childNodes.length; i++) {
-                walk(node.childNodes[i]);
-              }
-            }
-          };
-          walk(clonedDoc.documentElement);
+          // Patch all style tags
+          const styleTags = clonedDoc.getElementsByTagName('style');
+          for (let i = 0; i < styleTags.length; i++) {
+            try {
+              styleTags[i].textContent = styleTags[i].textContent.replace(oklchRegex, fallback);
+            } catch (e) { /* ignore */ }
+          }
+          
+          // Patch the entire body HTML to catch inline styles and variables
+          try {
+            clonedDoc.body.innerHTML = clonedDoc.body.innerHTML.replace(oklchRegex, fallback);
+          } catch (e) { /* ignore */ }
         }
       });
       
