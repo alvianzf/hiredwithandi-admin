@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
         token,
         refreshToken,
         isSuperadmin: user.role === 'SUPERADMIN',
-        organization: user.organization 
+        organization: user.role === 'SUPERADMIN' ? null : { id: user.orgId, name: user.organization }
       };
       
       setAdmin(sessionData);
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
         token,
         refreshToken,
         isSuperadmin: user.role === 'SUPERADMIN',
-        organization: user.organization 
+        organization: user.role === 'SUPERADMIN' ? null : { id: user.orgId, name: user.organization }
       };
       
       setAdmin(sessionData);
@@ -99,8 +99,18 @@ export const AuthProvider = ({ children }) => {
       const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
 
       const response = await api.patch('/profile', formDataOrFields, config);
+      const updatedUser = response.data.data;
+      const normalizedOrg = (updatedUser.role !== 'SUPERADMIN' && updatedUser.organization && typeof updatedUser.organization === 'string')
+        ? { id: updatedUser.orgId, name: updatedUser.organization }
+        : updatedUser.organization;
+
       // Update active session locally
-      const newSession = { ...admin, ...response.data.data, token: admin.token };
+      const newSession = { 
+        ...admin, 
+        ...updatedUser, 
+        organization: normalizedOrg,
+        token: admin.token 
+      };
       setAdmin(newSession);
       localStorage.setItem('hwa_admin_session', JSON.stringify(newSession));
       toast.success('Profile updated successfully');
