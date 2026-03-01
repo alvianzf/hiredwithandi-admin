@@ -3,17 +3,38 @@ import { useParams, Link } from "react-router-dom";
 import { FiArrowLeft, FiDownload } from "react-icons/fi";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import api from "../utils/api";
 
 export default function StudentView() {
   const { id } = useParams();
   const [student, setStudent] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [jobs, setJobs] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const reportRef = useRef(null);
 
   useEffect(() => {
-    const allStudents = JSON.parse(localStorage.getItem('hwa_students') || '[]');
-    const found = allStudents.find(s => s.id === id);
-    setStudent(found);
+    const fetchStudentData = async () => {
+      try {
+        // Find basic user details from localStorage cache (for ease/speed, as it exist today)
+        const allStudents = JSON.parse(localStorage.getItem('hwa_students') || '[]');
+        const found = allStudents.find(s => s.id === id);
+        
+        // If not in cache, we'd normally fetch GET /users/:id but the cache works for quick navigation
+        if (found) setStudent(found);
+
+        // Fetch their specific job analytics stats
+        const statsRes = await api.get(`/students/${id}/stats`);
+        setStats(statsRes.data.data);
+
+        // Fetch their specific jobs
+        const jobsRes = await api.get(`/jobs?userId=${id}`);
+        setJobs(jobsRes.data.data || []);
+      } catch (error) {
+        console.error("Failed to load student tracking data", error);
+      }
+    };
+    fetchStudentData();
   }, [id]);
 
   const generatePDF = async () => {
@@ -47,8 +68,8 @@ export default function StudentView() {
     }
   };
 
-  if (!student) {
-    return <div className="p-8 text-center text-xl">Loading student data...</div>;
+  if (!student || !stats) {
+    return <div className="p-8 text-center text-xl text-[var(--text-secondary)]">Loading student data...</div>;
   }
 
   const initials = student.name ? student.name.substring(0, 2).toUpperCase() : "ST";
@@ -112,42 +133,16 @@ export default function StudentView() {
               Average Time per Stage
             </h3>
             <div className="flex items-end space-x-2 mb-4">
-              <span className="text-4xl font-bold">0d</span>
+              <span className="text-4xl font-bold">{stats?.overview?.avgDaysInPipeline?.split(' ')[0] || '0'}d</span>
             </div>
             
             <div className="space-y-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--text-secondary)]">Wishlist <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">1 jobs</span></span>
-                <span className="font-bold">0d</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--text-secondary)]">Applied <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
-                <span className="font-bold">0d</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--text-secondary)]">HR Interview <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">1 jobs</span></span>
-                <span className="font-bold">0d</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--text-secondary)]">Technical Interview <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
-                <span className="font-bold">0d</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--text-secondary)]">Additional Interview <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
-                <span className="font-bold">0d</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--text-secondary)]">Offered <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">1 jobs</span></span>
-                <span className="font-bold">0d</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--text-secondary)]">Rejected by Company <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
-                <span className="font-bold">0d</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--text-secondary)]">Rejected by Applicant <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">0 jobs</span></span>
-                <span className="font-bold">0d</span>
-              </div>
+              {stats?.averageTimePerStage?.map((stage, i) => (
+                <div key={i} className="flex justify-between items-center text-sm">
+                  <span className="text-[var(--text-secondary)]">{stage.name} <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">{stage.jobsCount}</span></span>
+                  <span className="font-bold">{stage.averageDays}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -160,24 +155,24 @@ export default function StudentView() {
             <div className="grid grid-cols-2 gap-4 flex-1">
               <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
                 <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Median</span>
-                <span className="text-3xl font-bold text-blue-400">23%</span>
+                <span className="text-3xl font-bold text-blue-400">{stats?.jobFitPercentage?.median || 'N/A'}</span>
               </div>
               <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
                 <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Average</span>
-                <span className="text-3xl font-bold text-purple-400">45%</span>
+                <span className="text-3xl font-bold text-purple-400">{stats?.jobFitPercentage?.average || 'N/A'}</span>
               </div>
               <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
                 <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Lowest</span>
-                <span className="text-3xl font-bold text-red-500">22%</span>
+                <span className="text-3xl font-bold text-red-500">{stats?.jobFitPercentage?.lowest || 'N/A'}</span>
               </div>
               <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
                 <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Highest</span>
-                <span className="text-3xl font-bold text-green-500">90%</span>
+                <span className="text-3xl font-bold text-green-500">{stats?.jobFitPercentage?.highest || 'N/A'}</span>
               </div>
             </div>
             
             <div className="mt-4 text-center text-sm text-[var(--text-secondary)]">
-              Based on 3 jobs with JFP data
+              Based on {stats?.jobFitPercentage?.basedOn || 0} jobs with JFP data
             </div>
           </div>
 
@@ -191,70 +186,141 @@ export default function StudentView() {
           
           <div className="flex overflow-x-auto space-x-6 pb-4 kanban-scroll scrollbar-thin scrollbar-thumb-[var(--border-color)] scrollbar-track-transparent">
             
+            {/* Wishlist */}
             <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-gray-400 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Wishlist <span className="text-xs bg-gray-500 text-white px-2 py-1 rounded-full">1</span>
+                Wishlist <span className="text-xs bg-gray-500 text-white px-2 py-1 rounded-full">{jobs.filter(j => j.status === 'wishlist').length}</span>
               </h4>
-               <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-[var(--border-color)] shadow-sm">
-                  <p className="font-medium">Product Manager</p>
-                  <p className="text-xs text-[var(--text-secondary)]">StartupX</p>
-                </div>
+              {jobs.filter(j => j.status === 'wishlist').length === 0 ? (
+                <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              ) : (
+                jobs.filter(j => j.status === 'wishlist').map(job => (
+                  <div key={job.id} className="bg-[var(--bg-color)] p-3 rounded-lg border border-[var(--border-color)] shadow-sm mb-3">
+                    <p className="font-medium">{job.position}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{job.company}</p>
+                  </div>
+                ))
+              )}
             </div>
 
+            {/* Applied */}
             <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-blue-500 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Applied <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">0</span>
+                Applied <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">{jobs.filter(j => j.status === 'applied').length}</span>
               </h4>
-              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              {jobs.filter(j => j.status === 'applied').length === 0 ? (
+                <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              ) : (
+                jobs.filter(j => j.status === 'applied').map(job => (
+                  <div key={job.id} className="bg-[var(--bg-color)] p-3 rounded-lg border border-blue-500/30 shadow-sm mb-3">
+                    <p className="font-medium">{job.position}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{job.company}</p>
+                  </div>
+                ))
+              )}
             </div>
 
+            {/* HR Interview */}
             <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-indigo-500 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                HR Interview <span className="text-xs bg-indigo-500 text-white px-2 py-1 rounded-full">1</span>
+                HR Interview <span className="text-xs bg-indigo-500 text-white px-2 py-1 rounded-full">{jobs.filter(j => j.status === 'hr_interview').length}</span>
               </h4>
-               <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-indigo-500/30 shadow-sm">
-                  <p className="font-medium">Software Engineer</p>
-                  <p className="text-xs text-[var(--text-secondary)]">InnovateTech</p>
-                </div>
+              {jobs.filter(j => j.status === 'hr_interview').length === 0 ? (
+                <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              ) : (
+                jobs.filter(j => j.status === 'hr_interview').map(job => (
+                  <div key={job.id} className="bg-[var(--bg-color)] p-3 rounded-lg border border-indigo-500/30 shadow-sm mb-3">
+                    <p className="font-medium">{job.position}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{job.company}</p>
+                  </div>
+                ))
+              )}
             </div>
 
+            {/* Technical Interview */}
             <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-yellow-500 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Technical Interview <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded-full">0</span>
+                Technical Interview <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded-full">{jobs.filter(j => j.status === 'technical_interview').length}</span>
               </h4>
-              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              {jobs.filter(j => j.status === 'technical_interview').length === 0 ? (
+                <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              ) : (
+                jobs.filter(j => j.status === 'technical_interview').map(job => (
+                  <div key={job.id} className="bg-[var(--bg-color)] p-3 rounded-lg border border-yellow-500/30 shadow-sm mb-3">
+                    <p className="font-medium">{job.position}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{job.company}</p>
+                  </div>
+                ))
+              )}
             </div>
 
+            {/* Additional Interview */}
             <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-orange-500 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Additional Interview <span className="text-xs bg-orange-500 text-white px-2 py-1 rounded-full">0</span>
+                Additional Interview <span className="text-xs bg-orange-500 text-white px-2 py-1 rounded-full">{jobs.filter(j => j.status === 'additional_interview').length}</span>
               </h4>
-              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              {jobs.filter(j => j.status === 'additional_interview').length === 0 ? (
+                <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              ) : (
+                jobs.filter(j => j.status === 'additional_interview').map(job => (
+                  <div key={job.id} className="bg-[var(--bg-color)] p-3 rounded-lg border border-orange-500/30 shadow-sm mb-3">
+                    <p className="font-medium">{job.position}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{job.company}</p>
+                  </div>
+                ))
+              )}
             </div>
 
+            {/* Offered */}
             <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-green-500 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Offered <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">1</span>
+                Offered <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">{jobs.filter(j => j.status === 'offered').length}</span>
               </h4>
-              <div className="bg-[var(--bg-color)] p-3 rounded-lg border border-green-500/30 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-8 h-8 bg-green-500/20 rounded-bl-full flex items-center justify-center pl-2 pb-2">🎉</div>
-                <p className="font-medium">UI Developer</p>
-                <p className="text-xs text-[var(--text-secondary)]">DesignStudio</p>
-              </div>
+              {jobs.filter(j => j.status === 'offered').length === 0 ? (
+                <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              ) : (
+                jobs.filter(j => j.status === 'offered').map(job => (
+                  <div key={job.id} className="bg-[var(--bg-color)] p-3 rounded-lg border border-green-500/30 shadow-sm relative overflow-hidden mb-3">
+                    <div className="absolute top-0 right-0 w-8 h-8 bg-green-500/20 rounded-bl-full flex items-center justify-center pl-2 pb-2">🎉</div>
+                    <p className="font-medium">{job.position}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{job.company}</p>
+                  </div>
+                ))
+              )}
             </div>
 
+            {/* Rejected by Company */}
             <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-red-500 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Rejected by Company <span className="text-xs bg-red-500 text-white px-2 py-1 rounded-full">0</span>
+                Rejected by Company <span className="text-xs bg-red-500 text-white px-2 py-1 rounded-full">{jobs.filter(j => j.status === 'rejected_by_company').length}</span>
               </h4>
-              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              {jobs.filter(j => j.status === 'rejected_by_company').length === 0 ? (
+                <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              ) : (
+                jobs.filter(j => j.status === 'rejected_by_company').map(job => (
+                  <div key={job.id} className="bg-[var(--bg-color)] p-3 rounded-lg border border-red-500/30 shadow-sm mb-3 opacity-75">
+                    <p className="font-medium">{job.position}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{job.company}</p>
+                  </div>
+                ))
+              )}
             </div>
 
+            {/* Rejected by Applicant */}
             <div className="glass bg-black/5 dark:bg-white/5 p-4 rounded-xl border-t-4 border-red-900 min-w-[300px] flex-shrink-0">
               <h4 className="font-bold flex justify-between items-center mb-4">
-                Rejected by Applicant <span className="text-xs bg-red-900 text-white px-2 py-1 rounded-full">0</span>
+                Rejected by Applicant <span className="text-xs bg-red-900 text-white px-2 py-1 rounded-full">{jobs.filter(j => j.status === 'rejected_by_applicant').length}</span>
               </h4>
-              <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              {jobs.filter(j => j.status === 'rejected_by_applicant').length === 0 ? (
+                <div className="p-4 text-center text-sm text-[var(--text-secondary)] italic">Empty</div>
+              ) : (
+                jobs.filter(j => j.status === 'rejected_by_applicant').map(job => (
+                  <div key={job.id} className="bg-[var(--bg-color)] p-3 rounded-lg border border-red-900/40 shadow-sm mb-3 opacity-75">
+                    <p className="font-medium">{job.position}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{job.company}</p>
+                  </div>
+                ))
+              )}
             </div>
 
           </div>
