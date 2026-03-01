@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { FiArrowLeft, FiDownload } from "react-icons/fi";
 import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
+import domtoimage from "dom-to-image-more";
 import { toast } from "sonner";
 import api from "../utils/api";
 
@@ -41,62 +41,35 @@ export default function StudentView() {
     
     try {
       // Small timeout to allow UI update before capture if needed
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 500));
       
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff',
-        windowWidth: reportRef.current.scrollWidth,
-        windowHeight: reportRef.current.scrollHeight,
-        onclone: (clonedDoc) => {
-          // Deep fix for html2canvas failing on Tailwind 4 oklch() colors.
-          const oklchRegex = /oklch\s*\([^)]+\)/gi;
-          const fallback = '#777';
-          
-          // 1. Manually purge oklch from all parsed styleSheet rules
-          // This is the most effective way to prevent the html2canvas CSS parser from crashing
-          for (let i = 0; i < clonedDoc.styleSheets.length; i++) {
-            const sheet = clonedDoc.styleSheets[i];
-            try {
-              const rules = sheet.cssRules || sheet.rules;
-              if (!rules) continue;
-              for (let j = rules.length - 1; j >= 0; j--) {
-                if (rules[j].cssText && oklchRegex.test(rules[j].cssText)) {
-                  try {
-                    sheet.deleteRule(j);
-                  } catch (err) { /* ignore */ }
-                }
-              }
-            } catch (e) { /* cross-origin styles might throw */ }
-          }
-
-          // 2. Also patch style tags and body HTML as a secondary safety measure
-          try {
-            const styleTags = clonedDoc.getElementsByTagName('style');
-            for (let i = 0; i < styleTags.length; i++) {
-              styleTags[i].textContent = styleTags[i].textContent.replace(oklchRegex, fallback);
-            }
-            clonedDoc.body.innerHTML = clonedDoc.body.innerHTML.replace(oklchRegex, fallback);
-            clonedDoc.querySelectorAll('[style]').forEach(el => {
-              const s = el.getAttribute('style');
-              if (s && oklchRegex.test(s)) el.setAttribute('style', s.replace(oklchRegex, fallback));
-            });
-          } catch { /* ignore */ }
-        }
+      const width = reportRef.current.scrollWidth;
+      const height = reportRef.current.scrollHeight;
+      
+      // Use domtoimage instead of html2canvas to avoid oklch parsing issues
+      const imgData = await domtoimage.toPng(reportRef.current, {
+        width,
+        height,
+        bgcolor: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff',
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        },
+        cacheBust: true
       });
-      
-      const imgData = canvas.toDataURL('image/png');
       
       // Calculate dimensions in points (pt)
+      // Standard DPI is 96, jsPDF uses 72pt per inch.
+      const pdfWidth = width * 0.75;
+      const pdfHeight = height * 0.75;
+      
       const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? 'l' : 'p',
+        orientation: pdfWidth > pdfHeight ? 'l' : 'p',
         unit: 'pt',
-        format: [canvas.width, canvas.height] 
+        format: [pdfWidth, pdfHeight] 
       });
       
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${student?.name || 'Student'}_Report.pdf`);
       toast.success("Report downloaded successfully!", { id: toastId });
     } catch (error) {
