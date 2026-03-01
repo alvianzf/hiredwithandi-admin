@@ -1,23 +1,30 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import api from "../utils/api";
 
 export default function Dashboard() {
   const { admin } = useAuth();
   const [stats, setStats] = useState({ total: 0, active: 0, jobOffers: 0 });
 
   useEffect(() => {
-    if (admin) {
-      const allStudents = JSON.parse(localStorage.getItem('hwa_students') || '[]');
-      const orgStudents = allStudents.filter(s => s.orgId === admin.orgId);
-      
-      const active = orgStudents.filter(s => s.status === 'Active').length;
-      
-      setStats({
-        total: orgStudents.length,
-        active: active,
-        jobOffers: Math.floor(active * 0.2) || 0 // Mocked stat
-      });
+    async function fetchStats() {
+      if (admin) {
+        try {
+          const res = await api.get('/students');
+          const orgStudents = res.data.data;
+          const active = orgStudents.filter(s => s.status === 'ACTIVE').length;
+          
+          setStats({
+            total: orgStudents.length,
+            active: active,
+            jobOffers: Math.floor(active * 0.2) || 0 // Still mocked
+          });
+        } catch (error) {
+          console.error("Failed to load dashboard stats", error);
+        }
+      }
     }
+    fetchStats();
   }, [admin]);
 
   return (

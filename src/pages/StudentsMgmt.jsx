@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Link } from "react-router-dom";
 import { FiX, FiCheck, FiUploadCloud } from "react-icons/fi";
 import Papa from "papaparse";
+import { toast } from "sonner";
+import api from "../utils/api";
 
 export default function StudentsMgmt() {
   const { admin } = useAuth();
@@ -21,11 +22,14 @@ export default function StudentsMgmt() {
   const [uploadError, setUploadError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState("");
 
-  const loadStudents = useCallback(() => {
-    const allStudents = JSON.parse(localStorage.getItem('hwa_students') || '[]');
+  const loadStudents = useCallback(async () => {
     if (admin) {
-      const orgStudents = allStudents.filter(s => s.orgId === admin.orgId);
-      setStudents(orgStudents.reverse());
+      try {
+        const res = await api.get('/students');
+        setStudents(res.data.data.reverse());
+      } catch {
+        toast.error("Failed to load students");
+      }
     }
   }, [admin]);
 
@@ -33,29 +37,24 @@ export default function StudentsMgmt() {
     loadStudents();
   }, [loadStudents]);
 
-  const saveStudents = (updatedStudentsList) => {
-    const allStudents = JSON.parse(localStorage.getItem('hwa_students') || '[]');
-    const otherOrgsStudents = allStudents.filter(s => s.orgId !== admin?.orgId);
-    const combined = [...updatedStudentsList, ...otherOrgsStudents];
-    localStorage.setItem('hwa_students', JSON.stringify(combined));
-    loadStudents();
-  };
-
-  const handleCreateUser = (e) => {
+  const handleCreateUser = async (e) => {
     e.preventDefault();
     if (!newStudent.name || !newStudent.email) return;
 
-    const newEntry = {
-      id: 'stu_' + Date.now(),
-      orgId: admin.orgId,
-      name: newStudent.name,
-      email: newStudent.email,
-      status: 'Active',
-    };
-
-    saveStudents([newEntry, ...students]);
-    setNewStudent({ name: "", email: "" });
-    setIsCreateModalOpen(false);
+    try {
+      await api.post('/users', {
+        name: newStudent.name,
+        email: newStudent.email,
+        role: "STUDENT",
+        orgId: admin.orgId
+      });
+      toast.success("Student created successfully");
+      loadStudents();
+      setNewStudent({ name: "", email: "" });
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to create student");
+    }
   };
 
   const openEditModal = (student) => {
@@ -63,30 +62,33 @@ export default function StudentsMgmt() {
     setIsEditModalOpen(true);
   };
 
-  const handleEditUser = (e) => {
+  const handleEditUser = async (e) => {
     e.preventDefault();
     if (!editStudent || !editStudent.name || !editStudent.email) return;
 
-    const updated = students.map(s => {
-      if (s.id === editStudent.id) {
-        return { ...s, name: editStudent.name, email: editStudent.email };
-      }
-      return s;
-    });
-
-    saveStudents(updated);
-    setEditStudent(null);
-    setIsEditModalOpen(false);
+    try {
+      await api.patch(`/users/${editStudent.id}`, {
+        name: editStudent.name,
+        email: editStudent.email
+      });
+      toast.success("Student updated successfully");
+      loadStudents();
+      setEditStudent(null);
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to update student");
+    }
   };
 
-  const toggleStudentStatus = (id) => {
-    const updated = students.map(s => {
-      if (s.id === id) {
-        return { ...s, status: s.status === 'Active' ? 'Disabled' : 'Active' };
-      }
-      return s;
-    });
-    saveStudents(updated);
+  const toggleStudentStatus = async (student) => {
+    try {
+      const newStatus = student.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+      await api.patch(`/users/${student.id}`, { status: newStatus });
+      toast.success(`Student ${newStatus.toLowerCase()} successfully`);
+      loadStudents();
+    } catch {
+      toast.error("Failed to change student status");
+    }
   };
 
   const handleCsvUpload = (e) => {
@@ -99,7 +101,7 @@ export default function StudentsMgmt() {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: async (results) => {
         const { data } = results;
         if (!data || data.length === 0) {
           setUploadError("CSV is empty or format is invalid. Make sure it has 'name' and 'email' headers.");
@@ -125,12 +127,21 @@ export default function StudentsMgmt() {
           return;
         }
 
-        saveStudents([...newEntries, ...students]);
-        setUploadSuccess(`Successfully imported ${newEntries.length} students!`);
-        setTimeout(() => {
-          setIsCsvModalOpen(false);
-          setUploadSuccess("");
-        }, 2000);
+        try {
+          await api.post('/users/batch', {
+            orgId: admin.orgId,
+            students: newEntries
+          });
+          
+          loadStudents();
+          setUploadSuccess(`Successfully imported ${newEntries.length} students!`);
+          setTimeout(() => {
+            setIsCsvModalOpen(false);
+            setUploadSuccess("");
+          }, 2000);
+        } catch (error) {
+          setUploadError(error.response?.data?.error?.message || "Failed to batch upload students");
+        }
       },
       error: (err) => {
         setUploadError(err.message);
@@ -143,7 +154,7 @@ export default function StudentsMgmt() {
   const filteredStudents = students.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
                           s.email.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || s.status === statusFilter;
+    const matchesStatus = statusFilter === "All" || s.status === statusFilter.toUpperCase();
     return matchesSearch && matchesStatus;
   });
 
@@ -212,12 +223,12 @@ export default function StudentsMgmt() {
                 </tr>
               ) : (
                 filteredStudents.map(student => (
-                  <tr key={student.id} className={`border-b border-[var(--border-color)] ${student.status === 'Disabled' ? 'opacity-50' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
+                  <tr key={student.id} className={`border-b border-[var(--border-color)] ${student.status === 'DISABLED' ? 'opacity-50' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
                     <td className="p-4 font-medium">{student.name}</td>
                     <td className="p-4 text-[var(--text-secondary)]">{student.email}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        student.status === 'Active' 
+                        student.status === 'ACTIVE' 
                           ? 'bg-green-500/20 text-green-500' 
                           : 'bg-gray-500/20 text-gray-400'
                       }`}>
@@ -225,7 +236,6 @@ export default function StudentsMgmt() {
                       </span>
                     </td>
                     <td className="p-4 flex justify-center space-x-4 items-center">
-                      <Link to={`/students/${student.id}`} className="text-blue-500 hover:text-blue-400 font-medium transition-colors">View</Link>
                       <button 
                         onClick={() => openEditModal(student)}
                         className="text-yellow-500 hover:text-yellow-400 font-medium transition-colors"
@@ -233,10 +243,10 @@ export default function StudentsMgmt() {
                         Edit
                       </button>
                       <button 
-                        onClick={() => toggleStudentStatus(student.id)}
-                        className={`${student.status === 'Active' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'} font-medium transition-colors`}
+                        onClick={() => toggleStudentStatus(student)}
+                        className={`${student.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'} font-medium transition-colors`}
                       >
-                        {student.status === 'Active' ? 'Disable' : 'Enable'}
+                        {student.status === 'ACTIVE' ? 'Disable' : 'Enable'}
                       </button>
                     </td>
                   </tr>

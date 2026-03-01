@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import api from "../utils/api";
 
 export default function SuperDashboard() {
   const [stats, setStats] = useState({ 
@@ -9,15 +10,29 @@ export default function SuperDashboard() {
   });
 
   useEffect(() => {
-    const orgs = JSON.parse(localStorage.getItem('hwa_organizations') || '[]');
-    const admins = JSON.parse(localStorage.getItem('hwa_admins') || '[]');
-    const students = JSON.parse(localStorage.getItem('hwa_students') || '[]');
-    
-    setStats({
-      totalOrgs: orgs.length,
-      totalActiveAdmins: admins.length,
-      totalPlatformUsers: students.length
-    });
+    async function fetchStats() {
+      try {
+        const [orgRes, usersRes] = await Promise.all([
+          api.get('/organizations'),
+          api.get('/users')
+        ]);
+        
+        const orgs = orgRes.data.data;
+        const users = usersRes.data.data;
+        
+        const admins = users.filter((u) => u.role === 'ADMIN');
+        const students = users.filter((u) => u.role === 'STUDENT');
+
+        setStats({
+          totalOrgs: orgs.length,
+          totalActiveAdmins: admins.length,
+          totalPlatformUsers: students.length
+        });
+      } catch (error) {
+        console.error("Failed to load super dashboard stats", error);
+      }
+    }
+    fetchStats();
   }, []);
 
   return (

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { FiX, FiCheck, FiSearch, FiUserPlus, FiShield } from "react-icons/fi";
+import { toast } from "sonner";
+import api from "../utils/api";
 
 export default function PlatformUsers() {
   const [users, setUsers] = useState([]);
@@ -18,36 +20,29 @@ export default function PlatformUsers() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", role: "Org Admin", orgId: "" });
 
-  const loadData = useCallback(() => {
-    const allStudents = JSON.parse(localStorage.getItem('hwa_students') || '[]').map(u => ({...u, systemRole: 'Student'}));
-    const allAdmins = JSON.parse(localStorage.getItem('hwa_admins') || '[]').map(u => ({...u, systemRole: 'Org Admin'}));
-    const allSupers = JSON.parse(localStorage.getItem('hwa_superadmins') || '[]').map(u => ({...u, systemRole: 'Superadmin', orgId: 'sys'}));
-    const allOrgs = JSON.parse(localStorage.getItem('hwa_organizations') || '[]');
-    
-    setUsers([...allSupers, ...allAdmins, ...allStudents]);
-    setOrganizations(allOrgs);
+  const loadData = useCallback(async () => {
+    try {
+      const [usersRes, orgRes] = await Promise.all([
+        api.get("/users"),
+        api.get("/organizations")
+      ]);
+      setUsers(usersRes.data.data.map(u => ({
+        ...u, 
+        systemRole: u.role === 'SUPERADMIN' ? 'Superadmin' : u.role === 'ADMIN' ? 'Org Admin' : 'Student'
+      })));
+      setOrganizations(orgRes.data.data);
+    } catch {
+      toast.error("Failed to load platform data");
+    }
   }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const saveUsers = (updatedUsersList) => {
-    const newStudents = updatedUsersList.filter(u => u.systemRole === 'Student');
-    const newAdmins = updatedUsersList.filter(u => u.systemRole === 'Org Admin');
-    const newSupers = updatedUsersList.filter(u => u.systemRole === 'Superadmin');
-
-    localStorage.setItem('hwa_students', JSON.stringify(newStudents.map(({systemRole, ...rest}) => rest)));
-    localStorage.setItem('hwa_admins', JSON.stringify(newAdmins.map(({systemRole, ...rest}) => rest)));
-    localStorage.setItem('hwa_superadmins', JSON.stringify(newSupers.map(({systemRole, ...rest}) => rest)));
-    
-    setUsers(updatedUsersList);
-  };
-
   const getOrgName = (user) => {
-    if (user.systemRole === "Superadmin") return "System (Global)";
-    const org = organizations.find(o => o.id === user.orgId);
-    return org ? org.name : "Unknown Org";
+    if (user.role === "SUPERADMIN") return "System (Global)";
+    return user.organization?.name || "Unknown Org";
   };
 
   const openEditModal = (user) => {
@@ -55,61 +50,64 @@ export default function PlatformUsers() {
     setIsEditModalOpen(true);
   };
 
-  const handleEditUser = (e) => {
+  const handleEditUser = async (e) => {
     e.preventDefault();
     if (!editUser || !editUser.name || !editUser.email) return;
 
-    const updated = users.map(u => {
-      if (u.id === editUser.id) {
-        return { ...u, name: editUser.name, email: editUser.email };
-      }
-      return u;
-    });
-
-    saveUsers(updated);
-    setEditUser(null);
-    setIsEditModalOpen(false);
+    try {
+      await api.patch(`/users/${editUser.id}`, {
+        name: editUser.name,
+        email: editUser.email
+      });
+      toast.success("User updated");
+      loadData();
+      setEditUser(null);
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to update user");
+    }
   };
 
-  const handleCreateUser = (e) => {
+  const handleCreateUser = async (e) => {
     e.preventDefault();
     if (!newUser.name || !newUser.email) return;
     if (newUser.role === "Org Admin" && !newUser.orgId) return;
 
-    const newId = `${newUser.role === "Superadmin" ? "super" : "admin"}_${Date.now()}`;
-    const userObj = {
-      id: newId,
-      name: newUser.name,
-      email: newUser.email,
-      password: newUser.role === "Superadmin" ? "Superadmin#123" : "User#123",
-      role: newUser.role === "Superadmin" ? "superadmin" : "admin",
-      status: "Active",
-      systemRole: newUser.role,
-      orgId: newUser.role === "Superadmin" ? "sys" : newUser.orgId
-    };
-
-    saveUsers([userObj, ...users]);
-    setIsCreateModalOpen(false);
-    setNewUser({ name: "", email: "", role: "Org Admin", orgId: "" });
+    try {
+      await api.post("/users", {
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role === "Superadmin" ? "SUPERADMIN" : "ADMIN",
+        orgId: newUser.role === "Superadmin" ? undefined : newUser.orgId
+      });
+      
+      toast.success(`${newUser.role} created successfully`);
+      loadData();
+      setIsCreateModalOpen(false);
+      setNewUser({ name: "", email: "", role: "Org Admin", orgId: "" });
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to create user");
+    }
   };
 
-  const toggleUserStatus = (id) => {
-    const updated = users.map(u => {
-      if (u.id === id) {
-        const currentStatus = u.status || 'Active'; // default Active if undefined
-        return { ...u, status: currentStatus === 'Active' ? 'Disabled' : 'Active' };
-      }
-      return u;
-    });
-    saveUsers(updated);
+  const toggleUserStatus = async (user) => {
+    try {
+      const currentStatus = user.status || 'ACTIVE';
+      const newStatus = currentStatus === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+      await api.patch(`/users/${user.id}`, { status: newStatus });
+      toast.success(`User ${newStatus.toLowerCase()} successfully`);
+      loadData();
+    } catch {
+      toast.error("Failed to change user status");
+    }
   };
 
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.name?.toLowerCase().includes(search.toLowerCase()) || 
                           u.email?.toLowerCase().includes(search.toLowerCase());
-    const currentStatus = u.status || 'Active';
-    const matchesStatus = statusFilter === "All" || currentStatus === statusFilter;
-    const matchesOrg = orgFilter === "All" || u.orgId === orgFilter;
+    const currentStatus = u.status || 'ACTIVE';
+    const matchesStatus = statusFilter === "All" || currentStatus === statusFilter.toUpperCase();
+    const matchesOrg = orgFilter === "All" || (u.role === 'SUPERADMIN' && orgFilter === 'sys') || u.orgId === orgFilter;
     const matchesRole = roleFilter === "All" || u.systemRole === roleFilter;
     return matchesSearch && matchesStatus && matchesOrg && matchesRole;
   });
@@ -203,9 +201,9 @@ export default function PlatformUsers() {
                 </tr>
               ) : (
                 filteredUsers.map(user => {
-                  const currentStatus = user.status || 'Active';
+                  const currentStatus = user.status || 'ACTIVE';
                   return (
-                    <tr key={user.id} className={`border-b border-black/5 dark:border-white/5 ${currentStatus === 'Disabled' ? 'opacity-50 grayscale' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
+                    <tr key={user.id} className={`border-b border-black/5 dark:border-white/5 ${currentStatus === 'DISABLED' ? 'opacity-50 grayscale' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
                       <td className="p-4 font-bold">{user.name}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-widest ${
@@ -220,7 +218,7 @@ export default function PlatformUsers() {
                       <td className="p-4 text-[var(--text-secondary)] text-sm">{user.email}</td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
-                          currentStatus === 'Active' 
+                          currentStatus === 'ACTIVE' 
                             ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
                             : 'bg-red-500/20 text-red-600 dark:text-red-400'
                         }`}>
@@ -235,10 +233,10 @@ export default function PlatformUsers() {
                           Edit
                         </button>
                         <button 
-                          onClick={() => toggleUserStatus(user.id)}
-                          className={`${currentStatus === 'Active' ? 'text-red-600 dark:text-red-500 hover:text-red-700' : 'text-green-600 dark:text-green-500 hover:text-green-700'} font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg`}
+                          onClick={() => toggleUserStatus(user)}
+                          className={`${currentStatus === 'ACTIVE' ? 'text-red-600 dark:text-red-500 hover:text-red-700' : 'text-green-600 dark:text-green-500 hover:text-green-700'} font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg`}
                         >
-                          {currentStatus === 'Active' ? 'Disable' : 'Enable'}
+                          {currentStatus === 'ACTIVE' ? 'Disable' : 'Enable'}
                         </button>
                       </td>
                     </tr>

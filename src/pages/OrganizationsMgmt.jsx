@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FiPlus, FiBriefcase, FiUsers, FiSettings, FiCheck, FiX, FiAlertCircle } from "react-icons/fi";
+import { toast } from "sonner";
+import api from "../utils/api";
 
 export default function OrganizationsMgmt() {
   const [organizations, setOrganizations] = useState([]);
@@ -23,39 +25,41 @@ export default function OrganizationsMgmt() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setOrganizations(JSON.parse(localStorage.getItem('hwa_organizations') || '[]'));
-    setAdmins(JSON.parse(localStorage.getItem('hwa_admins') || '[]'));
+  const loadData = async () => {
+    try {
+      const [orgRes, usersRes] = await Promise.all([
+        api.get("/organizations"),
+        api.get("/users")
+      ]);
+      setOrganizations(orgRes.data.data);
+      setAdmins(usersRes.data.data.filter(u => u.role === "ADMIN"));
+    } catch {
+      toast.error("Failed to load organizations");
+    }
   };
 
-  const handleCreateOrg = (e) => {
+  const handleCreateOrg = async (e) => {
     e.preventDefault();
     if (!orgName || !adminName || !adminEmail) return;
 
-    const newOrgId = `org_${Date.now()}`;
-    const newOrg = { id: newOrgId, name: orgName };
-    
-    const newAdmin = {
-      id: `admin_${Date.now()}`,
-      orgId: newOrgId,
-      email: adminEmail,
-      password: "User#123", // Default password rule
-      name: adminName,
-      role: "admin"
-    };
+    try {
+      const orgRes = await api.post("/organizations", { name: orgName });
+      const newOrg = orgRes.data.data;
 
-    const updatedOrgs = [...organizations, newOrg];
-    const updatedAdmins = [...admins, newAdmin];
+      await api.post("/users", {
+        name: adminName,
+        email: adminEmail,
+        role: "ADMIN",
+        orgId: newOrg.id
+      });
 
-    localStorage.setItem('hwa_organizations', JSON.stringify(updatedOrgs));
-    localStorage.setItem('hwa_admins', JSON.stringify(updatedAdmins));
-
-    setOrganizations(updatedOrgs);
-    setAdmins(updatedAdmins);
-    setIsModalOpen(false);
-    
-    // Reset
-    setOrgName(""); setAdminName(""); setAdminEmail("");
+      toast.success("Organization onboarded successfully");
+      loadData();
+      setIsModalOpen(false);
+      setOrgName(""); setAdminName(""); setAdminEmail("");
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to create organization");
+    }
   };
 
   const getAdminsForOrg = (orgId) => {
@@ -68,41 +72,43 @@ export default function OrganizationsMgmt() {
     setIsManageModalOpen(true);
   };
 
-  const handleUpdateOrg = (e) => {
+  const handleUpdateOrg = async (e) => {
     e.preventDefault();
     if (!selectedOrg || !editOrgName.trim()) return;
 
-    const updatedOrgs = organizations.map(o => 
-      o.id === selectedOrg.id ? { ...o, name: editOrgName } : o
-    );
+    try {
+      if (editOrgName !== selectedOrg.name) {
+        await api.patch(`/organizations/${selectedOrg.id}`, { name: editOrgName });
+      }
 
-    localStorage.setItem('hwa_organizations', JSON.stringify(updatedOrgs));
-    setOrganizations(updatedOrgs);
+      if (newOrgAdminName && newOrgAdminEmail) {
+        await api.post("/users", {
+          name: newOrgAdminName,
+          email: newOrgAdminEmail,
+          role: "ADMIN",
+          orgId: selectedOrg.id
+        });
+      }
 
-    if (newOrgAdminName && newOrgAdminEmail) {
-      const newAdmin = {
-        id: `admin_${Date.now()}`,
-        orgId: selectedOrg.id,
-        email: newOrgAdminEmail,
-        password: "User#123",
-        name: newOrgAdminName,
-        role: "admin"
-      };
-      const updatedAdmins = [...admins, newAdmin];
-      localStorage.setItem('hwa_admins', JSON.stringify(updatedAdmins));
-      setAdmins(updatedAdmins);
+      toast.success("Organization updated");
+      loadData();
+      setIsManageModalOpen(false);
+      setSelectedOrg(null);
+      setNewOrgAdminName("");
+      setNewOrgAdminEmail("");
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to update organization");
     }
-
-    setIsManageModalOpen(false);
-    setSelectedOrg(null);
-    setNewOrgAdminName("");
-    setNewOrgAdminEmail("");
   };
 
-  const removeAdmin = (adminId) => {
-    const updatedAdmins = admins.filter(a => a.id !== adminId);
-    localStorage.setItem('hwa_admins', JSON.stringify(updatedAdmins));
-    setAdmins(updatedAdmins);
+  const removeAdmin = async (adminId) => {
+    try {
+      await api.patch(`/users/${adminId}`, { status: "DISABLED" });
+      toast.success("Admin disabled successfully");
+      loadData();
+    } catch {
+      toast.error("Failed to remove admin");
+    }
   };
 
   return (
