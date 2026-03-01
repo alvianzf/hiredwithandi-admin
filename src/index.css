@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-yellow: #FFB800; /* Learn With Andi Primary Yellow */
+  --color-primary-yellow: #ffb800; /* Learn With Andi Primary Yellow */
   --color-primary-red: #ea4335; /* Strong Google Red to match portfolio */
-  
+
   --color-dark-bg: #111111; /* Deeper dark background */
   --color-dark-surface: rgba(25, 25, 25, 0.75);
-  
+
   --color-light-bg: #f3f4f6;
   --color-light-surface: rgba(255, 255, 255, 0.9);
 }
@@ -35,7 +35,7 @@
   body {
     @apply bg-[var(--bg-color)] text-[var(--text-primary)] transition-colors duration-300 antialiased font-sans;
   }
-  
+
   ::selection {
     background-color: var(--selection-bg);
     color: inherit;
@@ -46,20 +46,31 @@
   .glass {
     @apply bg-[var(--surface-color)] backdrop-blur-xl border border-[var(--glass-border)] shadow-xl;
   }
-  
+
   .kanban-scroll::-webkit-scrollbar {
     height: 8px;
   }
-  
+
   .kanban-scroll::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .kanban-scroll::-webkit-scrollbar-thumb {
     background-color: var(--border-color);
     border-radius: 20px;
   }
-  
+
+  .select-styled {
+    @apply px-4 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-color)] 
+           text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] 
+           focus:border-transparent outline-none transition-all cursor-pointer appearance-none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FFB800'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+  }
+
   .bg-doodle {
     background-image: url("data:image/svg+xml,%3Csvg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg' stroke='%239C92AC' stroke-opacity='0.08' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(30, 40) scale(1.5)'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cline x1='10' y1='9' x2='8' y2='9'/%3E%3C/g%3E%3Cg transform='translate(150, 40) scale(1.5)'%3E%3Crect x='2' y='7' width='20' height='14' rx='2' ry='2'/%3E%3Cpath d='M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16'/%3E%3C/g%3E%3Cg transform='translate(100, 150) scale(1.5)'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/g%3E%3Cg transform='translate(40, 230) scale(1.5)'%3E%3Ccircle cx='12' cy='8' r='7'/%3E%3Cpolyline points='8.21 13.89 7 23 12 20 17 23 15.79 13.88'/%3E%3C/g%3E%3Cg transform='translate(220, 180) scale(1.5)'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 8v8'/%3E%3Cpath d='M9.5 9.5c.8-.8 2.5-1.5 4-1.5s2.5.5 2.5 1.5-1.5 2.5-4 2.5-2.5 1.5-2.5 2.5 1.5 2.5 4 2.5 2.5-.5 3.5-1.5'/%3E%3C/g%3E%3Cg transform='translate(240, 60) scale(1)'%3E%3Cpath d='M2 12h20M12 2v20' opacity='0.5'/%3E%3C/g%3E%3Cg transform='translate(60, 130) scale(0.8)'%3E%3Ccircle cx='12' cy='12' r='4' opacity='0.5'/%3E%3C/g%3E%3C/svg%3E");
   }

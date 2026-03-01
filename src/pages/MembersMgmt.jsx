@@ -217,7 +217,7 @@ export default function MembersMgmt() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full md:w-48 px-4 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
+            className="select-styled w-full md:w-48"
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
@@ -226,7 +226,7 @@ export default function MembersMgmt() {
           <select
             value={batchFilter}
             onChange={(e) => setBatchFilter(e.target.value)}
-            className="w-full md:w-56 px-4 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
+            className="select-styled w-full md:w-56"
           >
             <option value="">All Batches</option>
             {batches.map(b => (
@@ -344,7 +344,7 @@ export default function MembersMgmt() {
                 <select
                   value={newMember.batchId}
                   onChange={e => setNewMember({...newMember, batchId: e.target.value})}
-                  className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors text-[var(--text-primary)]"
+                  className="select-styled w-full"
                 >
                   <option value="">None</option>
                   {batches.map(b => (
@@ -415,7 +415,7 @@ export default function MembersMgmt() {
                 <select
                   value={editMember.batchId || ""}
                   onChange={e => setEditMember({...editMember, batchId: e.target.value})}
-                  className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors text-[var(--text-primary)]"
+                  className="select-styled w-full"
                 >
                   <option value="">None</option>
                   {batches.map(b => (
@@ -498,7 +498,7 @@ export default function MembersMgmt() {
                 <select
                   value={csvBatchId}
                   onChange={e => setCsvBatchId(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors text-[var(--text-primary)]"
+                  className="select-styled w-full"
                 >
                   <option value="">None</option>
                   {batches.map(b => (

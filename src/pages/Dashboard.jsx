@@ -69,7 +69,7 @@ export default function Dashboard() {
           <select
             value={selectedBatchId}
             onChange={(e) => setSelectedBatchId(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent outline-none min-w-[150px]"
+            className="select-styled min-w-[150px]"
           >
             <option value="">All Batches</option>
             {batches.map(b => (

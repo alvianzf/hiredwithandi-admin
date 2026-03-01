@@ -480,7 +480,7 @@ export default function OrganizationsMgmt() {
                     type="text"
                     value={newBatchName}
                     onChange={(e) => setNewBatchName(e.target.value)}
-                    className="flex-1 px-4 py-2 text-sm rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                    className="select-styled flex-1"
                     placeholder="e.g. Fall 2024"
                   />
                   <button
