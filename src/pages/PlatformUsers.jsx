@@ -187,6 +187,7 @@ export default function PlatformUsers() {
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Role</th>
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Organization</th>
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Email</th>
+                <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Last Login</th>
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Status</th>
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)] text-center">Actions</th>
               </tr>
@@ -216,6 +217,9 @@ export default function PlatformUsers() {
                       </td>
                       <td className="p-4 text-sm font-medium text-[var(--text-primary)]">{getOrgName(user)}</td>
                       <td className="p-4 text-[var(--text-secondary)] text-sm">{user.email}</td>
+                      <td className="p-4 text-[var(--text-secondary)] text-sm">
+                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
+                      </td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
                           currentStatus === 'ACTIVE' 

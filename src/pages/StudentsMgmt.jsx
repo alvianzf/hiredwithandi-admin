@@ -39,7 +39,7 @@ export default function StudentsMgmt() {
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
-    if (!newStudent.name || !newStudent.email) return;
+    if (!newStudent.email) return;
 
     try {
       await api.post('/users', {
@@ -274,10 +274,9 @@ export default function StudentsMgmt() {
             </div>
             <form onSubmit={handleCreateUser} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Full Name</label>
+                <label className="block text-sm font-medium mb-1">Full Name (Optional)</label>
                 <input 
                   type="text" 
-                  required
                   value={newStudent.name}
                   onChange={e => setNewStudent({...newStudent, name: e.target.value})}
                   className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
@@ -294,13 +293,6 @@ export default function StudentsMgmt() {
                   className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
                   placeholder="john@example.com"
                 />
-              </div>
-              
-              <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start space-x-2 mt-2">
-                <div className="mt-1 text-yellow-500"><FiCheck /></div>
-                <p className="text-xs text-[var(--text-secondary)]">
-                  Default password <span className="font-mono bg-black/10 dark:bg-black/30 px-1 rounded mx-1">User#123</span> will be assigned to this new user.
-                </p>
               </div>
 
               <div className="pt-4 flex justify-end space-x-3">
