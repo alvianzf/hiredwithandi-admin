@@ -119,7 +119,7 @@ export default function OrganizationsMgmt() {
         await api.delete(`/batches/${batchId}`);
         toast.success("Batch deleted");
         loadBatches(selectedOrg.id);
-      } catch (error) {
+      } catch {
         toast.error("Failed to delete batch");
       }
     }
@@ -499,7 +499,7 @@ export default function OrganizationsMgmt() {
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={handleToggleOrgStatus}
+                    onClick={() => handleToggleOrgStatus()}
                     className="flex-1 py-2 rounded-xl text-sm font-bold border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors"
                   >
                     {selectedOrg.status === 'ACTIVE' ? 'Disable Organization' : 'Enable Organization'}
