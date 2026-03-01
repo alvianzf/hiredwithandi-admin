@@ -187,16 +187,6 @@ export default function Login() {
             </button>
           </div>
         </form>
-
-        <div className="mt-8 pt-6 border-t border-[var(--border-color)]">
-          <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl text-center text-xs text-[var(--text-secondary)]">
-            <p className="font-semibold mb-2 uppercase tracking-wide text-[10px]">Demo Access Credentials</p>
-            <div className="flex flex-col space-y-1 font-mono">
-              <span className="text-[var(--text-primary)]">Admin: test@example.com / User#123</span>
-              <span className="text-[var(--text-primary)]">Global: superadmin@example.com / Superadmin#123</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
