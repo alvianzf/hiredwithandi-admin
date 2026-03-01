@@ -51,14 +51,35 @@ export default function StudentView() {
         windowWidth: reportRef.current.scrollWidth,
         windowHeight: reportRef.current.scrollHeight,
         onclone: (clonedDoc) => {
-          // Fix for html2canvas failing on Tailwind 4 oklch() colors
+          // Thorough fix for html2canvas failing on Tailwind 4 oklch() colors
+          // This scans STYLE tags and all inline style attributes
+          
+          const oklchRegex = /oklch\([^)]+\)/g;
+          const fallbackColor = 'rgb(100, 100, 100)';
+          
+          // 1. Patch all <style> tags
           const styleTags = clonedDoc.getElementsByTagName('style');
           for (let i = 0; i < styleTags.length; i++) {
             try {
-              // Replace oklch definitions with a generic RGB fallback to prevent parser crash
-              styleTags[i].innerHTML = styleTags[i].innerHTML.replace(/oklch\([^)]+\)/g, 'rgb(120, 120, 120)');
+              if (styleTags[i].innerHTML.includes('oklch')) {
+                styleTags[i].innerHTML = styleTags[i].innerHTML.replace(oklchRegex, fallbackColor);
+              }
             } catch (e) {
-              console.warn("Failed to patch style tag for PDF generation", e);
+              console.warn("PDF Patch: Style tag failed", e);
+            }
+          }
+          
+          // 2. Patch all elements with inline styles (recursively)
+          const allElements = clonedDoc.getElementsByTagName('*');
+          for (let i = 0; i < allElements.length; i++) {
+            const el = allElements[i];
+            try {
+              const styleAttr = el.getAttribute('style');
+              if (styleAttr && styleAttr.includes('oklch')) {
+                el.setAttribute('style', styleAttr.replace(oklchRegex, fallbackColor));
+              }
+            } catch (e) {
+              // Ignore elements that can't be patched
             }
           }
         }
