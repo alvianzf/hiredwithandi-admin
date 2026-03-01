@@ -211,6 +211,7 @@ export default function StudentsMgmt() {
                 <th className="p-4 font-semibold">Name</th>
                 <th className="p-4 font-semibold">Email</th>
                 <th className="p-4 font-semibold">Status</th>
+                <th className="p-4 font-semibold">Last Logged In</th>
                 <th className="p-4 font-semibold text-center">Actions</th>
               </tr>
             </thead>
@@ -234,6 +235,12 @@ export default function StudentsMgmt() {
                       }`}>
                         {student.status}
                       </span>
+                    </td>
+                    <td className="p-4 text-sm text-[var(--text-secondary)]">
+                      {student.lastLogin ? new Date(student.lastLogin).toLocaleDateString(undefined, {
+                        year: 'numeric', month: 'short', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                      }) : 'Never'}
                     </td>
                     <td className="p-4 flex justify-center space-x-4 items-center">
                       <button 
