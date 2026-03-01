@@ -4,11 +4,14 @@ import { useAuth } from "../context/AuthContext";
 import { FiLock, FiMail } from "react-icons/fi";
 
 export default function Login() {
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [hasExistingPassword, setHasExistingPassword] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const { login, admin } = useAuth();
+  const { login, checkEmail, setupPassword, admin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,12 +28,42 @@ export default function Login() {
     }
   }, [isDarkMode]);
 
-  const handleSubmit = (e) => {
+  const handleNext = async (e) => {
     e.preventDefault();
+    if (!email.trim()) return;
+
+    setIsLoading(true);
     setError("");
-    const success = login(email, password);
+    
+    // Check if the email exists and if it has a password
+    const result = await checkEmail(email);
+    setIsLoading(false);
+
+    if (result && result.exists) {
+      setHasExistingPassword(result.hasPassword);
+      setStep(2);
+    } else {
+      setError("Account not found. Please contact your administrator.");
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) return;
+
+    setIsLoading(true);
+    setError("");
+    
+    let success = false;
+    if (hasExistingPassword) {
+      success = await login(email, password);
+    } else {
+      success = await setupPassword(email, password);
+    }
+    
+    setIsLoading(false);
     if (!success) {
-      setError("Invalid email or password");
+      setError("Authentication failed. Please try again.");
     } else {
       navigate("/");
     }
@@ -63,7 +96,7 @@ export default function Login() {
           </p>
         </div>
         
-        <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-10 space-y-6" onSubmit={step === 1 ? handleNext : handleSubmit}>
           {error && (
             <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm text-center font-medium animate-in fade-in slide-in-from-top-2">
               {error}
@@ -71,46 +104,78 @@ export default function Login() {
           )}
           
           <div className="space-y-5">
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <FiMail className="text-[var(--text-secondary)] group-focus-within:text-[var(--color-primary-yellow)] transition-colors" size={20} />
+            {step === 1 && (
+              <div className="relative group animate-in fade-in slide-in-from-bottom-2">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <FiMail className="text-[var(--text-secondary)] group-focus-within:text-[var(--color-primary-yellow)] transition-colors" size={20} />
+                </div>
+                <input
+                  id="email-address"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  autoFocus
+                  className="appearance-none rounded-xl relative block w-full px-4 py-4 pl-12 border-2 border-transparent bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:outline-none focus:bg-[var(--bg-color)] focus:border-[var(--color-primary-yellow)] sm:text-sm transition-all duration-300 shadow-inner placeholder-[var(--text-secondary)]"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-xl relative block w-full px-4 py-4 pl-12 border-2 border-transparent bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:outline-none focus:bg-[var(--bg-color)] focus:border-[var(--color-primary-yellow)] sm:text-sm transition-all duration-300 shadow-inner placeholder-[var(--text-secondary)]"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <FiLock className="text-[var(--text-secondary)] group-focus-within:text-[var(--color-primary-yellow)] transition-colors" size={20} />
+            )}
+            
+            {step === 2 && (
+              <div className="animate-in fade-in slide-in-from-right-4 space-y-4">
+                <div className="mb-2 flex items-center justify-between text-sm px-1">
+                  <span className="text-[var(--text-secondary)] font-medium">{email}</span>
+                  <button 
+                    type="button" 
+                    onClick={() => setStep(1)}
+                    className="text-[var(--color-primary-yellow)] hover:text-[#e6a600] transition-colors font-bold"
+                  >
+                    Change
+                  </button>
+                </div>
+
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <FiLock className="text-[var(--text-secondary)] group-focus-within:text-[var(--color-primary-yellow)] transition-colors" size={20} />
+                  </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    autoFocus
+                    className="appearance-none rounded-xl relative block w-full px-4 py-4 pl-12 border-2 border-transparent bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:outline-none focus:bg-[var(--bg-color)] focus:border-[var(--color-primary-yellow)] sm:text-sm transition-all duration-300 shadow-inner placeholder-[var(--text-secondary)]"
+                    placeholder={hasExistingPassword ? "Password" : "Create a New Password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                {!hasExistingPassword && (
+                  <p className="mt-2 text-xs text-[var(--text-secondary)] px-1">
+                    Your account has been created by a Superadmin. Please set a secure password to continue.
+                  </p>
+                )}
               </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-xl relative block w-full px-4 py-4 pl-12 border-2 border-transparent bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:outline-none focus:bg-[var(--bg-color)] focus:border-[var(--color-primary-yellow)] sm:text-sm transition-all duration-300 shadow-inner placeholder-[var(--text-secondary)]"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+            )}
           </div>
 
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full flex justify-center items-center py-4 px-4 text-base font-bold rounded-xl text-black bg-[var(--color-primary-yellow)] hover:bg-[#e6a600] focus:outline-none focus:ring-4 focus:ring-yellow-500/50 transition-all duration-300 shadow-[0_0_20px_rgba(255,184,0,0.4)] hover:shadow-[0_0_25px_rgba(255,184,0,0.6)] transform hover:-translate-y-0.5"
+              disabled={isLoading}
+              className="w-full flex justify-center items-center py-4 px-4 text-base font-bold rounded-xl text-black bg-[var(--color-primary-yellow)] hover:bg-[#e6a600] focus:outline-none focus:ring-4 focus:ring-yellow-500/50 transition-all duration-300 shadow-[0_0_20px_rgba(255,184,0,0.4)] hover:shadow-[0_0_25px_rgba(255,184,0,0.6)] transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign into Dashboard
+              {isLoading 
+                ? 'Loading...' 
+                : step === 1 
+                  ? 'Continue →' 
+                  : !hasExistingPassword 
+                    ? 'Create Password & Sign In' 
+                    : 'Sign into Dashboard'}
             </button>
           </div>
         </form>
