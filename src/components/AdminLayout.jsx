@@ -57,10 +57,9 @@ export default function AdminLayout() {
       <aside 
         className={`${isSidebarOpen ? 'w-64' : 'w-20'} glass flex flex-col transition-all duration-300 relative z-20`}
       >
-        <div className="h-16 flex items-center justify-center border-b border-[var(--border-color)]">
-          <span className="font-bold text-xl tracking-tight text-[var(--color-primary-yellow)] truncate px-4">
-            {isSidebarOpen ? "HiredWithAndi" : "HWA"}
-          </span>
+        <div className="h-16 flex items-center justify-center border-b border-[var(--border-color)] gap-2 px-4">
+          <img src="/lwa-logo.png" alt="LWA" className="h-8 w-8 object-contain" />
+          {isSidebarOpen && <span className="font-bold text-xl tracking-tight text-[var(--color-primary-yellow)] truncate">HiredWithAndi</span>}
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4">

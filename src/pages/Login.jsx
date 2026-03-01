@@ -53,10 +53,8 @@ export default function Login() {
       </div>
 
       <div className="w-full max-w-md space-y-8 glass p-10 rounded-3xl relative z-10 border-t border-l border-white/20 dark:border-white/10 shadow-2xl">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--color-primary-yellow)] to-orange-400 mb-6 shadow-lg shadow-yellow-500/30">
-            <span className="text-4xl font-black text-black">HWA</span>
-          </div>
+        <div className="text-center flex flex-col items-center">
+          <img src="/lwa-logo.png" alt="LWA" className="w-24 h-24 mb-6 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" />
           <h2 className="text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
             Welcome Back
           </h2>
