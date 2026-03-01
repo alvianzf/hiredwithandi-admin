@@ -10,28 +10,37 @@ export default function StudentView() {
   const [student, setStudent] = useState(null);
   const [stats, setStats] = useState(null);
   const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const reportRef = useRef(null);
 
   useEffect(() => {
     const fetchStudentData = async () => {
+      setLoading(true);
       try {
-        // Find basic user details from localStorage cache (for ease/speed, as it exist today)
+        // Find basic user details from localStorage cache
         const allStudents = JSON.parse(localStorage.getItem('hwa_students') || '[]');
         const found = allStudents.find(s => s.id === id);
         
-        // If not in cache, we'd normally fetch GET /users/:id but the cache works for quick navigation
         if (found) setStudent(found);
 
-        // Fetch their specific job analytics stats
-        const statsRes = await api.get(`/students/${id}/stats`);
-        setStats(statsRes.data.data);
+        // Fetch their specific job analytics stats and jobs in parallel
+        const [statsRes, jobsRes] = await Promise.allSettled([
+          api.get(`/students/${id}/stats`),
+          api.get(`/jobs?userId=${id}`)
+        ]);
 
-        // Fetch their specific jobs
-        const jobsRes = await api.get(`/jobs?userId=${id}`);
-        setJobs(jobsRes.data.data || []);
+        if (statsRes.status === 'fulfilled') {
+          setStats(statsRes.value.data.data);
+        }
+        
+        if (jobsRes.status === 'fulfilled') {
+          setJobs(jobsRes.value.data.data || []);
+        }
       } catch (error) {
         console.error("Failed to load student tracking data", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchStudentData();
@@ -68,11 +77,27 @@ export default function StudentView() {
     }
   };
 
-  if (!student || !stats) {
-    return <div className="p-8 text-center text-xl text-[var(--text-secondary)]">Loading student data...</div>;
+  if (loading && !student) {
+    return <div className="p-12 text-center text-xl text-[var(--text-secondary)] flex flex-col items-center justify-center space-y-4">
+      <div className="w-12 h-12 border-4 border-[var(--color-primary-yellow)] border-t-transparent rounded-full animate-spin"></div>
+      <p className="font-bold tracking-widest uppercase">Fetching Records...</p>
+    </div>;
+  }
+
+  if (!student) {
+    return <div className="p-8 text-center text-xl text-red-500">
+      <p>Student not found or access denied.</p>
+      <Link to="/students" className="mt-4 inline-block text-[var(--color-primary-yellow)] hover:underline">Return to list</Link>
+    </div>;
   }
 
   const initials = student.name ? student.name.substring(0, 2).toUpperCase() : "ST";
+  
+  const statsWithDefaults = stats || {
+    overview: { avgDaysInPipeline: "0d" },
+    averageTimePerStage: [],
+    jobFitPercentage: { median: "N/A", average: "N/A", lowest: "N/A", highest: "N/A", basedOn: 0 }
+  };
 
   return (
     <div className="space-y-6 pb-20">
@@ -133,16 +158,19 @@ export default function StudentView() {
               Average Time per Stage
             </h3>
             <div className="flex items-end space-x-2 mb-4">
-              <span className="text-4xl font-bold">{stats?.overview?.avgDaysInPipeline?.split(' ')[0] || '0'}d</span>
+              <span className="text-4xl font-bold">{statsWithDefaults.overview?.avgDaysInPipeline?.split(' ')[0] || '0'}d</span>
+              <span className="text-sm text-[var(--text-secondary)] pb-1">avg. pipeline speed</span>
             </div>
             
             <div className="space-y-3">
-              {stats?.averageTimePerStage?.map((stage, i) => (
+              {statsWithDefaults.averageTimePerStage?.length > 0 ? statsWithDefaults.averageTimePerStage.map((stage, i) => (
                 <div key={i} className="flex justify-between items-center text-sm">
                   <span className="text-[var(--text-secondary)]">{stage.name} <span className="ml-2 font-medium text-white bg-white/10 px-2 py-0.5 rounded-full text-xs">{stage.jobsCount}</span></span>
                   <span className="font-bold">{stage.averageDays}</span>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-4 text-xs text-[var(--text-secondary)] italic">No interview stage data available</div>
+              )}
             </div>
           </div>
 
@@ -155,24 +183,24 @@ export default function StudentView() {
             <div className="grid grid-cols-2 gap-4 flex-1">
               <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
                 <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Median</span>
-                <span className="text-3xl font-bold text-blue-400">{stats?.jobFitPercentage?.median || 'N/A'}</span>
+                <span className="text-3xl font-bold text-blue-400">{statsWithDefaults.jobFitPercentage?.median || 'N/A'}</span>
               </div>
               <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
                 <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Average</span>
-                <span className="text-3xl font-bold text-purple-400">{stats?.jobFitPercentage?.average || 'N/A'}</span>
+                <span className="text-3xl font-bold text-purple-400">{statsWithDefaults.jobFitPercentage?.average || 'N/A'}</span>
               </div>
               <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
                 <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Lowest</span>
-                <span className="text-3xl font-bold text-red-500">{stats?.jobFitPercentage?.lowest || 'N/A'}</span>
+                <span className="text-3xl font-bold text-red-500">{statsWithDefaults.jobFitPercentage?.lowest || 'N/A'}</span>
               </div>
               <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl flex flex-col justify-center items-center">
                 <span className="text-[var(--text-secondary)] text-sm mb-1 uppercase tracking-wider font-semibold">Highest</span>
-                <span className="text-3xl font-bold text-green-500">{stats?.jobFitPercentage?.highest || 'N/A'}</span>
+                <span className="text-3xl font-bold text-green-500">{statsWithDefaults.jobFitPercentage?.highest || 'N/A'}</span>
               </div>
             </div>
             
             <div className="mt-4 text-center text-sm text-[var(--text-secondary)]">
-              Based on {stats?.jobFitPercentage?.basedOn || 0} jobs with JFP data
+              Based on {statsWithDefaults.jobFitPercentage?.basedOn || 0} jobs with JFP data
             </div>
           </div>
 
