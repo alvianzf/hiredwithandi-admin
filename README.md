@@ -28,18 +28,97 @@ It is designed to give Bootcamps, Universities, and Organizational partners an a
   - Instantly export their status reporting to **PDF** using `html2canvas` and `jsPDF`.
 - **Dynamic Theming**: True dark/light mode toggle with state persistence built using Tailwind CSS v4 and vanilla custom CSS properties supporting an AdminLTE aesthetic layered with _Glassmorphism_.
 
-## Tech Stack
+---
 
-- **React 18** (`react`, `react-dom`)
-- **Vite.js** (Fast build tool and dev server)
-- **Tailwind CSS v4** (`@tailwindcss/vite` plugin for atomic styling)
-- **React Router DOM** (SPA routing and `ProtectedRoute` mapping)
-- **Papaparse** (Client-side CSV parsing)
-- **jsPDF / html2canvas** (PDF generation of HTML objects)
-- **React Icons** (Feather icons suite)
-- **LocalStorage Data Persistence** (Simulated mocked database)
+## 🚀 Ubuntu VPS Setup Guide (Nginx + PM2)
 
-## Running the Application Locally
+This guide assumes a fresh Ubuntu 22.04/24.04 LTS server.
+
+### 1. System Update & Dependencies
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl git nginx
+```
+
+### 2. Node.js Installation (nvm)
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc
+nvm install 20
+```
+
+### 3. Application Deployment
+
+```bash
+git clone https://github.com/alvianzf/hiredwithandi-admin.git
+cd hiredwithandi-admin
+npm install
+```
+
+Create `.env.local` file:
+
+```bash
+nano .env.local
+```
+
+Add your production API URL:
+
+```env
+VITE_API_URL=https://your-api-domain.com/api
+```
+
+### 4. Build for Production
+
+```bash
+npm run build
+```
+
+### 5. Serving with PM2
+
+We use PM2 to serve the static files:
+
+```bash
+npm install -g pm2
+pm2 serve dist 5173 --name hwa-admin --spa
+pm2 save
+pm2 startup
+```
+
+### 6. Nginx Reverse Proxy
+
+```bash
+sudo nano /etc/nginx/sites-available/hwa-admin
+```
+
+Add configuration:
+
+```nginx
+server {
+    listen 80;
+    server_name your_admin_domain_or_ip;
+
+    location / {
+        proxy_pass http://localhost:5173;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+Enable and restart:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/hwa-admin /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+---
 
 1. **Clone the repository**
 

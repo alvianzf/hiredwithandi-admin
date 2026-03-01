@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { FiMenu, FiMoon, FiSun, FiUsers, FiPieChart, FiLogOut, FiBriefcase, FiSettings, FiX, FiCheck, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiMenu, FiMoon, FiSun, FiUsers, FiPieChart, FiLogOut, FiBriefcase, FiSettings, FiX, FiCheck, FiEye, FiEyeOff, FiKey } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
 
@@ -328,9 +328,9 @@ export default function AdminLayout() {
                       type="button"
                       onClick={handlePasswordChange}
                       disabled={passwordStatus.type === 'loading'}
-                      className="w-full py-2 rounded-lg font-bold bg-white/10 text-white hover:bg-white/20 transition-all text-xs disabled:opacity-50"
+                      className="w-full py-2.5 rounded-xl font-bold bg-[var(--color-primary-red)] text-white hover:bg-[#c82333] transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
                     >
-                      {passwordStatus.type === 'loading' ? 'Processing...' : 'Update Password Securely'}
+                      {passwordStatus.type === 'loading' ? 'Processing...' : <><FiKey /> Update Password Securely</>}
                     </button>
                   </div>
                 )}
