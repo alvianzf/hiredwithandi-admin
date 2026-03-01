@@ -52,22 +52,30 @@ export default function StudentView() {
         windowHeight: reportRef.current.scrollHeight,
         onclone: (clonedDoc) => {
           // Exhaustive fix for html2canvas failing on Tailwind 4 oklch() colors.
-          // This replaces ALL occurrences in the cloned document's styles and HTML.
+          // This replaces ALL occurrences in the cloned document's styles, HTML, and attributes.
           const oklchRegex = /oklch\s*\([^)]+\)/gi;
-          const fallback = 'currentColor';
+          const fallback = '#777';
           
-          // Patch all style tags
-          const styleTags = clonedDoc.getElementsByTagName('style');
-          for (let i = 0; i < styleTags.length; i++) {
-            try {
-              styleTags[i].textContent = styleTags[i].textContent.replace(oklchRegex, fallback);
-            } catch (e) { /* ignore */ }
-          }
-          
-          // Patch the entire body HTML to catch inline styles and variables
           try {
+            // Patch all style tags
+            const styleTags = clonedDoc.getElementsByTagName('style');
+            for (let i = 0; i < styleTags.length; i++) {
+              styleTags[i].textContent = styleTags[i].textContent.replace(oklchRegex, fallback);
+            }
+            
+            // Patch the entire body HTML string
             clonedDoc.body.innerHTML = clonedDoc.body.innerHTML.replace(oklchRegex, fallback);
-          } catch (e) { /* ignore */ }
+
+            // Patch all inline styles that might be on the root or other elements
+            clonedDoc.querySelectorAll('*').forEach(el => {
+              const s = el.getAttribute('style');
+              if (s && /oklch/i.test(s)) {
+                el.setAttribute('style', s.replace(oklchRegex, fallback));
+              }
+            });
+          } catch {
+            console.warn("PDF Patch: Failed to fully sanitize oklch colors");
+          }
         }
       });
       
