@@ -18,25 +18,14 @@ export default function StudentView() {
     const fetchStudentData = async () => {
       setLoading(true);
       try {
-        // Fetch basic student profile from API
-        const studentRes = await api.get(`/students/${id}`);
-        setStudent(studentRes.data.data);
-
-        // Fetch their specific job analytics stats and jobs in parallel
-        const [statsRes, jobsRes] = await Promise.allSettled([
-          api.get(`/students/${id}/stats`),
-          api.get(`/jobs?userId=${id}`)
-        ]);
-
-        if (statsRes.status === 'fulfilled') {
-          setStats(statsRes.value.data.data);
-        }
+        const res = await api.get(`/students/${id}/dashboard`);
+        const { student, stats, jobs } = res.data.data;
         
-        if (jobsRes.status === 'fulfilled') {
-          setJobs(jobsRes.value.data.data || []);
-        }
+        setStudent(student);
+        setStats(stats);
+        setJobs(jobs);
       } catch (error) {
-        console.error("Failed to load student tracking data", error);
+        console.error("Failed to load student dashboard data", error);
       } finally {
         setLoading(false);
       }
