@@ -117,14 +117,14 @@ export default function StudentView() {
           </div>
         </div>
         
-        <button 
+        {/* <button 
           onClick={generatePDF}
           disabled={isGenerating}
           className={`${isGenerating ? 'opacity-50 cursor-not-allowed' : ''} flex items-center space-x-2 bg-[var(--color-primary-yellow)] text-black px-5 py-2.5 rounded-lg font-bold hover:bg-yellow-500 transition-colors shadow-md`}
         >
           <FiDownload size={18} />
           <span>{isGenerating ? "Generating..." : "Download PDF Report"}</span>
-        </button>
+        </button> */}
       </div>
 
       {/* Wrapping the content we want in the PDF with a div ref */}
