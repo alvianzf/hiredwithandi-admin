@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { FiMenu, FiMoon, FiSun, FiUsers, FiPieChart, FiLogOut, FiBriefcase, FiSettings, FiX, FiCheck } from "react-icons/fi";
+import { FiMenu, FiMoon, FiSun, FiUsers, FiPieChart, FiLogOut, FiBriefcase, FiSettings, FiX, FiCheck, FiEye, FiEyeOff } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
 
@@ -22,6 +22,11 @@ export default function AdminLayout() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordStatus, setPasswordStatus] = useState({ type: '', message: '' });
 
+  // Password Visibility States
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   useEffect(() => {
     if (admin) {
       setEditName(admin.name);
@@ -36,6 +41,9 @@ export default function AdminLayout() {
       setNewPassword("");
       setConfirmPassword("");
       setPasswordStatus({ type: '', message: '' });
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
     }
   }, [isProfileModalOpen]);
 
@@ -247,35 +255,62 @@ export default function AdminLayout() {
 
                     <div>
                       <label className="block text-[10px] font-bold text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Current Password</label>
-                      <input
-                        type="password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-[var(--border-color)] bg-black/10 dark:bg-white/5 text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
-                        placeholder="••••••••"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showCurrentPassword ? "text" : "password"}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border border-[var(--border-color)] bg-black/10 dark:bg-white/5 text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all pr-10"
+                          placeholder="••••••••"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--color-primary-yellow)] transition-colors"
+                        >
+                          {showCurrentPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-[10px] font-bold text-[var(--text-secondary)] mb-1 uppercase tracking-wide">New Password</label>
-                        <input
-                          type="password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-[var(--border-color)] bg-black/10 dark:bg-white/5 text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
-                          placeholder="••••••••"
-                        />
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-[var(--border-color)] bg-black/10 dark:bg-white/5 text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all pr-10"
+                            placeholder="••••••••"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--color-primary-yellow)] transition-colors"
+                          >
+                            {showNewPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                          </button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Confirm New</label>
-                        <input
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-[var(--border-color)] bg-black/10 dark:bg-white/5 text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
-                          placeholder="••••••••"
-                        />
+                        <div className="relative">
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-[var(--border-color)] bg-black/10 dark:bg-white/5 text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all pr-10"
+                            placeholder="••••••••"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--color-primary-yellow)] transition-colors"
+                          >
+                            {showConfirmPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                          </button>
+                        </div>
                       </div>
                     </div>
 

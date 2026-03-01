@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FiLock, FiMail } from "react-icons/fi";
+import { FiLock, FiMail, FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function Login() {
   const [step, setStep] = useState(1);
@@ -11,6 +11,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const { login, checkEmail, setupPassword, admin } = useAuth();
   const navigate = useNavigate();
 
@@ -144,15 +145,22 @@ export default function Login() {
                   <input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     required
                     autoFocus
-                    className="appearance-none rounded-xl relative block w-full px-4 py-4 pl-12 border-2 border-transparent bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:outline-none focus:bg-[var(--bg-color)] focus:border-[var(--color-primary-yellow)] sm:text-sm transition-all duration-300 shadow-inner placeholder-[var(--text-secondary)]"
+                    className="appearance-none rounded-xl relative block w-full px-4 py-4 pl-12 pr-12 border-2 border-transparent bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:outline-none focus:bg-[var(--bg-color)] focus:border-[var(--color-primary-yellow)] sm:text-sm transition-all duration-300 shadow-inner placeholder-[var(--text-secondary)]"
                     placeholder={hasExistingPassword ? "Password" : "Create a New Password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--color-primary-yellow)] transition-colors"
+                  >
+                    {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                  </button>
                 </div>
                 {!hasExistingPassword && (
                   <p className="mt-2 text-xs text-[var(--text-secondary)] px-1">
