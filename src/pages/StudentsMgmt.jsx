@@ -165,7 +165,7 @@ export default function StudentsMgmt() {
           <h1 className="text-3xl font-bold text-[var(--color-primary-yellow)]">
             Students & Members
           </h1>
-          <p className="text-[var(--text-secondary)] mt-1">Manage users in {admin?.organization?.name}.</p>
+          <p className="text-[var(--text-secondary)] mt-1">Manage users in {admin?.organization?.name || "your organization"}.</p>
         </div>
         
         <div className="flex flex-wrap gap-3">
