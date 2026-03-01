@@ -49,13 +49,24 @@ export default function StudentView() {
         logging: false,
         backgroundColor: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff',
         windowWidth: reportRef.current.scrollWidth,
-        windowHeight: reportRef.current.scrollHeight
+        windowHeight: reportRef.current.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Fix for html2canvas failing on Tailwind 4 oklch() colors
+          const styleTags = clonedDoc.getElementsByTagName('style');
+          for (let i = 0; i < styleTags.length; i++) {
+            try {
+              // Replace oklch definitions with a generic RGB fallback to prevent parser crash
+              styleTags[i].innerHTML = styleTags[i].innerHTML.replace(/oklch\([^)]+\)/g, 'rgb(120, 120, 120)');
+            } catch (e) {
+              console.warn("Failed to patch style tag for PDF generation", e);
+            }
+          }
+        }
       });
       
       const imgData = canvas.toDataURL('image/png');
       
       // Calculate dimensions in points (pt)
-      // 1px = 0.75pt (approx)
       const pdf = new jsPDF({
         orientation: canvas.width > canvas.height ? 'l' : 'p',
         unit: 'pt',
@@ -121,7 +132,7 @@ export default function StudentView() {
       </div>
 
       {/* Wrapping the content we want in the PDF with a div ref */}
-      <div ref={reportRef} className="space-y-6 pt-4 pb-8 pl-2 pr-2">
+      <div ref={reportRef} data-report-canvas="true" className="space-y-6 pt-4 pb-8 pl-2 pr-2">
         {/* Profile Details */}
         <div className="glass p-6 sm:p-8 rounded-2xl flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-8 shadow-sm">
           <div className="w-24 h-24 rounded-full bg-[var(--color-primary-red)] flex items-center justify-center text-white text-3xl font-bold shadow-lg flex-shrink-0">
