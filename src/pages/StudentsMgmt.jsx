@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FiX, FiCheck, FiUploadCloud } from "react-icons/fi";
+import { FiX, FiCheck, FiUploadCloud, FiExternalLink } from "react-icons/fi";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import api from "../utils/api";
@@ -243,9 +244,15 @@ export default function StudentsMgmt() {
                       }) : 'Never'}
                     </td>
                     <td className="p-4 flex justify-center space-x-4 items-center">
+                      <Link 
+                        to={`/students/${student.id}`}
+                        className="text-[var(--color-primary-yellow)] hover:underline font-medium flex items-center gap-1 transition-colors"
+                      >
+                        <FiExternalLink size={14} /> View
+                      </Link>
                       <button 
                         onClick={() => openEditModal(student)}
-                        className="text-yellow-500 hover:text-yellow-400 font-medium transition-colors"
+                        className="text-neutral-400 hover:text-white font-medium transition-colors"
                       >
                         Edit
                       </button>
