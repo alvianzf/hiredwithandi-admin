@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { FiArrowLeft, FiDownload } from "react-icons/fi";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { toast } from "sonner";
 import api from "../utils/api";
 
 export default function StudentView() {
@@ -36,29 +37,37 @@ export default function StudentView() {
   const generatePDF = async () => {
     if (!reportRef.current) return;
     setIsGenerating(true);
+    const toastId = toast.loading("Preparing your report...");
     
     try {
       // Small timeout to allow UI update before capture if needed
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 300));
       
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
-        backgroundColor: document.documentElement.classList.contains('dark') ? '#0f172a' : '#f8fafc',
+        useCORS: true,
+        logging: false,
+        backgroundColor: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff',
         windowWidth: reportRef.current.scrollWidth,
         windowHeight: reportRef.current.scrollHeight
       });
       
       const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate dimensions in points (pt)
+      // 1px = 0.75pt (approx)
       const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'pica',
+        orientation: canvas.width > canvas.height ? 'l' : 'p',
+        unit: 'pt',
         format: [canvas.width, canvas.height] 
       });
       
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
       pdf.save(`${student?.name || 'Student'}_Report.pdf`);
+      toast.success("Report downloaded successfully!", { id: toastId });
     } catch (error) {
       console.error("PDF generation failed", error);
+      toast.error("Failed to generate PDF. Please try again.", { id: toastId });
     } finally {
       setIsGenerating(false);
     }
