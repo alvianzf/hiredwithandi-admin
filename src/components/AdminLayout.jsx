@@ -75,7 +75,7 @@ export default function AdminLayout() {
       ]
     : [
         { name: "Dashboard", path: "/", icon: <FiPieChart size={20} /> },
-        { name: "Members & Members", path: "/members", icon: <FiUsers size={20} /> },
+        { name: "Members & Batches", path: "/members", icon: <FiUsers size={20} /> },
       ];
 
   const adminInitials = admin?.name ? admin.name.substring(0, 2).toUpperCase() : "AD";

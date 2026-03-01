@@ -46,7 +46,7 @@ export default function MembersMgmt() {
         toast.error("Failed to load members");
       }
     }
-  }, [admin, batchFilter]);
+  }, [admin]);
 
   useEffect(() => {
     loadBatches();
@@ -183,7 +183,7 @@ export default function MembersMgmt() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[var(--color-primary-yellow)]">
-            Members & Members
+            Members & Batches
           </h1>
           <p className="text-[var(--text-secondary)] mt-1">Manage users in {admin?.organization?.name || "your organization"}.</p>
         </div>
