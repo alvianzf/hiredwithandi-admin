@@ -81,7 +81,7 @@ We use PM2 to serve the static files:
 
 ```bash
 npm install -g pm2
-pm2 serve dist 5173 --name hwa-admin --spa
+pm2 serve dist 5174 --name hwa-admin --spa
 pm2 save
 pm2 startup
 ```
@@ -100,7 +100,7 @@ server {
     server_name your_admin_domain_or_ip;
 
     location / {
-        proxy_pass http://localhost:5173;
+        proxy_pass http://localhost:5174;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
