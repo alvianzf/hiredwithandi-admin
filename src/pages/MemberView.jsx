@@ -6,9 +6,9 @@ import domtoimage from "dom-to-image-more";
 import { toast } from "sonner";
 import api from "../utils/api";
 
-export default function StudentView() {
+export default function MemberView() {
   const { id } = useParams();
-  const [student, setStudent] = useState(null);
+  const [member, setMember] = useState(null);
   const [stats, setStats] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,22 +16,22 @@ export default function StudentView() {
   const reportRef = useRef(null);
 
   useEffect(() => {
-    const fetchStudentData = async () => {
+    const fetchMemberData = async () => {
       setLoading(true);
       try {
-        const res = await api.get(`/students/${id}/dashboard`);
-        const { student, stats, jobs } = res.data.data;
+        const res = await api.get(`/members/${id}/dashboard`);
+        const { member, stats, jobs } = res.data.data;
         
-        setStudent(student);
+        setMember(member);
         setStats(stats);
         setJobs(jobs);
       } catch (error) {
-        console.error("Failed to load student dashboard data", error);
+        console.error("Failed to load member dashboard data", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchStudentData();
+    fetchMemberData();
   }, [id]);
 
   const generatePDF = async () => {
@@ -70,7 +70,7 @@ export default function StudentView() {
       });
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${student?.name || 'Student'}_Report.pdf`);
+      pdf.save(`${member?.name || 'Member'}_Report.pdf`);
       toast.success("Report downloaded successfully!", { id: toastId });
     } catch (error) {
       console.error("PDF generation failed", error);
@@ -80,21 +80,21 @@ export default function StudentView() {
     }
   };
 
-  if (loading && !student) {
+  if (loading && !member) {
     return <div className="p-12 text-center text-xl text-[var(--text-secondary)] flex flex-col items-center justify-center space-y-4">
       <div className="w-12 h-12 border-4 border-[var(--color-primary-yellow)] border-t-transparent rounded-full animate-spin"></div>
       <p className="font-bold tracking-widest uppercase">Fetching Records...</p>
     </div>;
   }
 
-  if (!student) {
+  if (!member) {
     return <div className="p-8 text-center text-xl text-red-500">
-      <p>Student not found or access denied.</p>
-      <Link to="/students" className="mt-4 inline-block text-[var(--color-primary-yellow)] hover:underline">Return to list</Link>
+      <p>Member not found or access denied.</p>
+      <Link to="/members" className="mt-4 inline-block text-[var(--color-primary-yellow)] hover:underline">Return to list</Link>
     </div>;
   }
 
-  const initials = student.name ? student.name.substring(0, 2).toUpperCase() : "ST";
+  const initials = member.name ? member.name.substring(0, 2).toUpperCase() : "ST";
   
   const statsWithDefaults = stats || {
     overview: { avgDaysInPipeline: "0d" },
@@ -106,14 +106,14 @@ export default function StudentView() {
     <div className="space-y-6 pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center space-x-4">
-          <Link to="/students" className="p-2 glass rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+          <Link to="/members" className="p-2 glass rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
             <FiArrowLeft size={20} />
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-[var(--color-primary-yellow)]">
-              Student Profile
+              Member Profile
             </h1>
-            <p className="text-[var(--text-secondary)] mt-1">Viewing details for {student.name}</p>
+            <p className="text-[var(--text-secondary)] mt-1">Viewing details for {member.name}</p>
           </div>
         </div>
         
@@ -135,18 +135,18 @@ export default function StudentView() {
             {initials}
           </div>
           <div className="text-center md:text-left flex-1">
-            <h2 className="text-3xl font-bold">{student.name}</h2>
-            <p className="text-lg text-[var(--text-secondary)] mt-1">{student.email}</p>
+            <h2 className="text-3xl font-bold">{member.name}</h2>
+            <p className="text-lg text-[var(--text-secondary)] mt-1">{member.email}</p>
             <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
               <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${
-                student.status === 'Active' 
+                member.status === 'Active' 
                   ? 'bg-green-500 text-white' 
                   : 'bg-gray-500 text-white'
               }`}>
-                {student.status.toUpperCase()}
+                {member.status.toUpperCase()}
               </span>
               <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-blue-500 text-white">
-                Member ID: {student.id.substring(4, 12)}
+                Member ID: {member.id.substring(4, 12)}
               </span>
             </div>
           </div>

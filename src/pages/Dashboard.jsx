@@ -26,7 +26,7 @@ export default function Dashboard() {
   }, [admin]);
 
   const statsWithDefaults = stats || {
-    studentCount: 0,
+    memberCount: 0,
     overview: { all: 0, offered: { count: 0 }, avgDaysInPipeline: "0d" },
     activityInsights: { interviewRate: "0%" },
     averageTimePerStage: [],
@@ -49,7 +49,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
         <div className="glass p-6 rounded-xl flex flex-col justify-center items-center shadow-lg transition-transform hover:scale-105">
           <h3 className="text-base text-[var(--text-secondary)] font-medium mb-2 uppercase tracking-wide">Total Users</h3>
-          <p className="text-5xl font-bold text-[var(--text-primary)] text-center">{statsWithDefaults.studentCount || 0}</p>
+          <p className="text-5xl font-bold text-[var(--text-primary)] text-center">{statsWithDefaults.memberCount || 0}</p>
         </div>
         <div className="glass p-6 rounded-xl flex flex-col justify-center items-center shadow-lg transition-transform hover:scale-105 border-[var(--color-primary-yellow)] border-opacity-50">
           <h3 className="text-base text-[var(--text-secondary)] font-medium mb-2 uppercase tracking-wide">Tracked Jobs</h3>

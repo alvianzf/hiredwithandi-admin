@@ -21,12 +21,12 @@ export default function SuperDashboard() {
         const users = usersRes.data.data;
         
         const admins = users.filter((u) => u.role === 'ADMIN');
-        const students = users.filter((u) => u.role === 'STUDENT');
+        const members = users.filter((u) => u.role === 'MEMBER');
 
         setStats({
           totalOrgs: orgs.length,
           totalActiveAdmins: admins.length,
-          totalPlatformUsers: students.length
+          totalPlatformUsers: members.length
         });
       } catch (error) {
         console.error("Failed to load super dashboard stats", error);

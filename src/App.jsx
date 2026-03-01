@@ -2,8 +2,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import AdminLayout from "./components/AdminLayout";
 import Dashboard from "./pages/Dashboard";
-import StudentsMgmt from "./pages/StudentsMgmt";
-import StudentView from "./pages/StudentView";
+import MembersMgmt from "./pages/MembersMgmt";
+import MemberView from "./pages/MemberView";
 import Login from "./pages/Login";
 import SuperDashboard from "./pages/SuperDashboard";
 import OrganizationsMgmt from "./pages/OrganizationsMgmt";
@@ -42,8 +42,8 @@ function App() {
           <Route index element={<DashboardRouter />} />
           
           {/* Org Admin Routes */}
-          <Route path="students" element={admin?.isSuperadmin ? <Navigate to="/platform-users" replace /> : <StudentsMgmt />} />
-          <Route path="students/:id" element={<StudentView />} />
+          <Route path="members" element={admin?.isSuperadmin ? <Navigate to="/platform-users" replace /> : <MembersMgmt />} />
+          <Route path="members/:id" element={<MemberView />} />
 
           {/* Superadmin Routes */}
           <Route path="organizations" element={admin?.isSuperadmin ? <OrganizationsMgmt /> : <Navigate to="/" replace />} />

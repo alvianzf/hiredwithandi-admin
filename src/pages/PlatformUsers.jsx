@@ -28,7 +28,7 @@ export default function PlatformUsers() {
       ]);
       setUsers(usersRes.data.data.map(u => ({
         ...u, 
-        systemRole: u.role === 'SUPERADMIN' ? 'Superadmin' : u.role === 'ADMIN' ? 'Org Admin' : 'Student'
+        systemRole: u.role === 'SUPERADMIN' ? 'Superadmin' : u.role === 'ADMIN' ? 'Org Admin' : 'Member'
       })));
       setOrganizations(orgRes.data.data);
     } catch {
@@ -122,7 +122,7 @@ export default function PlatformUsers() {
           <h1 className="text-3xl font-bold text-[var(--color-primary-red)]">
             Platform Users
           </h1>
-          <p className="text-[var(--text-secondary)] mt-1">Superadmin: Oversee all platform members (Students, Admins, Superadmins).</p>
+          <p className="text-[var(--text-secondary)] mt-1">Superadmin: Oversee all platform members (Members, Admins, Superadmins).</p>
         </div>
         <button 
           onClick={() => setIsCreateModalOpen(true)}
@@ -151,7 +151,7 @@ export default function PlatformUsers() {
             className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
           >
             <option value="All">All Roles</option>
-            <option value="Student">Student</option>
+            <option value="Member">Member</option>
             <option value="Org Admin">Org Admin</option>
             <option value="Superadmin">Superadmin</option>
           </select>

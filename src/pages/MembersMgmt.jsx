@@ -6,89 +6,89 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import api from "../utils/api";
 
-export default function StudentsMgmt() {
+export default function MembersMgmt() {
   const { admin } = useAuth();
-  const [students, setStudents] = useState([]);
+  const [members, setMembers] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newStudent, setNewStudent] = useState({ name: "", email: "" });
+  const [newMember, setNewMember] = useState({ name: "", email: "" });
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editStudent, setEditStudent] = useState(null);
+  const [editMember, setEditMember] = useState(null);
 
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState("");
 
-  const loadStudents = useCallback(async () => {
+  const loadMembers = useCallback(async () => {
     if (admin) {
       try {
-        const res = await api.get('/students');
-        setStudents(res.data.data.reverse());
+        const res = await api.get('/members');
+        setMembers(res.data.data.reverse());
       } catch {
-        toast.error("Failed to load students");
+        toast.error("Failed to load members");
       }
     }
   }, [admin]);
 
   useEffect(() => {
-    loadStudents();
-  }, [loadStudents]);
+    loadMembers();
+  }, [loadMembers]);
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
-    if (!newStudent.email) return;
+    if (!newMember.email) return;
 
     try {
       await api.post('/users', {
-        name: newStudent.name,
-        email: newStudent.email,
-        role: "STUDENT",
+        name: newMember.name,
+        email: newMember.email,
+        role: "MEMBER",
         orgId: admin.orgId
       });
-      toast.success("Student created successfully");
-      loadStudents();
-      setNewStudent({ name: "", email: "" });
+      toast.success("Member created successfully");
+      loadMembers();
+      setNewMember({ name: "", email: "" });
       setIsCreateModalOpen(false);
     } catch (error) {
-      toast.error(error.response?.data?.error?.message || "Failed to create student");
+      toast.error(error.response?.data?.error?.message || "Failed to create member");
     }
   };
 
-  const openEditModal = (student) => {
-    setEditStudent({ ...student });
+  const openEditModal = (member) => {
+    setEditMember({ ...member });
     setIsEditModalOpen(true);
   };
 
   const handleEditUser = async (e) => {
     e.preventDefault();
-    if (!editStudent || !editStudent.name || !editStudent.email) return;
+    if (!editMember || !editMember.name || !editMember.email) return;
 
     try {
-      await api.patch(`/users/${editStudent.id}`, {
-        name: editStudent.name,
-        email: editStudent.email
+      await api.patch(`/users/${editMember.id}`, {
+        name: editMember.name,
+        email: editMember.email
       });
-      toast.success("Student updated successfully");
-      loadStudents();
-      setEditStudent(null);
+      toast.success("Member updated successfully");
+      loadMembers();
+      setEditMember(null);
       setIsEditModalOpen(false);
     } catch (error) {
-      toast.error(error.response?.data?.error?.message || "Failed to update student");
+      toast.error(error.response?.data?.error?.message || "Failed to update member");
     }
   };
 
-  const toggleStudentStatus = async (student) => {
+  const toggleMemberStatus = async (member) => {
     try {
-      const newStatus = student.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
-      await api.patch(`/users/${student.id}`, { status: newStatus });
-      toast.success(`Student ${newStatus.toLowerCase()} successfully`);
-      loadStudents();
+      const newStatus = member.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+      await api.patch(`/users/${member.id}`, { status: newStatus });
+      toast.success(`Member ${newStatus.toLowerCase()} successfully`);
+      loadMembers();
     } catch {
-      toast.error("Failed to change student status");
+      toast.error("Failed to change member status");
     }
   };
 
@@ -131,17 +131,17 @@ export default function StudentsMgmt() {
         try {
           await api.post('/users/batch', {
             orgId: admin.orgId,
-            students: newEntries
+            members: newEntries
           });
           
-          loadStudents();
-          setUploadSuccess(`Successfully imported ${newEntries.length} students!`);
+          loadMembers();
+          setUploadSuccess(`Successfully imported ${newEntries.length} members!`);
           setTimeout(() => {
             setIsCsvModalOpen(false);
             setUploadSuccess("");
           }, 2000);
         } catch (error) {
-          setUploadError(error.response?.data?.error?.message || "Failed to batch upload students");
+          setUploadError(error.response?.data?.error?.message || "Failed to batch upload members");
         }
       },
       error: (err) => {
@@ -152,7 +152,7 @@ export default function StudentsMgmt() {
     e.target.value = null; // reset file input so the same file can be chosen again
   };
 
-  const filteredStudents = students.filter(s => {
+  const filteredMembers = members.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
                           s.email.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "All" || s.status === statusFilter.toUpperCase();
@@ -164,7 +164,7 @@ export default function StudentsMgmt() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[var(--color-primary-yellow)]">
-            Students & Members
+            Members & Members
           </h1>
           <p className="text-[var(--text-secondary)] mt-1">Manage users in {admin?.organization?.name || "your organization"}.</p>
         </div>
@@ -190,7 +190,7 @@ export default function StudentsMgmt() {
         <div className="p-4 border-b border-[var(--border-color)] flex flex-col md:flex-row gap-4">
           <input 
             type="text" 
-            placeholder="Search students..." 
+            placeholder="Search members..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full md:w-1/3 px-4 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
@@ -217,50 +217,50 @@ export default function StudentsMgmt() {
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.length === 0 ? (
+              {filteredMembers.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="p-8 text-center text-[var(--text-secondary)]">
-                    No students found.
+                    No members found.
                   </td>
                 </tr>
               ) : (
-                filteredStudents.map(student => (
-                  <tr key={student.id} className={`border-b border-[var(--border-color)] ${student.status === 'DISABLED' ? 'opacity-50' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
-                    <td className="p-4 font-medium">{student.name}</td>
-                    <td className="p-4 text-[var(--text-secondary)]">{student.email}</td>
+                filteredMembers.map(member => (
+                  <tr key={member.id} className={`border-b border-[var(--border-color)] ${member.status === 'DISABLED' ? 'opacity-50' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
+                    <td className="p-4 font-medium">{member.name}</td>
+                    <td className="p-4 text-[var(--text-secondary)]">{member.email}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        student.status === 'ACTIVE' 
+                        member.status === 'ACTIVE' 
                           ? 'bg-green-500/20 text-green-500' 
                           : 'bg-gray-500/20 text-gray-400'
                       }`}>
-                        {student.status}
+                        {member.status}
                       </span>
                     </td>
                     <td className="p-4 text-sm text-[var(--text-secondary)]">
-                      {student.lastLogin ? new Date(student.lastLogin).toLocaleDateString(undefined, {
+                      {member.lastLogin ? new Date(member.lastLogin).toLocaleDateString(undefined, {
                         year: 'numeric', month: 'short', day: 'numeric',
                         hour: '2-digit', minute: '2-digit'
                       }) : 'Never'}
                     </td>
                     <td className="p-4 flex justify-center space-x-4 items-center">
                       <Link 
-                        to={`/students/${student.id}`}
+                        to={`/members/${member.id}`}
                         className="text-[var(--color-primary-yellow)] hover:underline font-medium flex items-center gap-1 transition-colors"
                       >
                         <FiExternalLink size={14} /> View
                       </Link>
                       <button 
-                        onClick={() => openEditModal(student)}
+                        onClick={() => openEditModal(member)}
                         className="text-neutral-400 hover:text-white font-medium transition-colors"
                       >
                         Edit
                       </button>
                       <button 
-                        onClick={() => toggleStudentStatus(student)}
-                        className={`${student.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'} font-medium transition-colors`}
+                        onClick={() => toggleMemberStatus(member)}
+                        className={`${member.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'} font-medium transition-colors`}
                       >
-                        {student.status === 'ACTIVE' ? 'Disable' : 'Enable'}
+                        {member.status === 'ACTIVE' ? 'Disable' : 'Enable'}
                       </button>
                     </td>
                   </tr>
@@ -270,7 +270,7 @@ export default function StudentsMgmt() {
           </table>
         </div>
         <div className="p-4 border-t border-[var(--border-color)] text-sm text-[var(--text-secondary)] text-center">
-          Showing {filteredStudents.length} of {students.length} students
+          Showing {filteredMembers.length} of {members.length} members
         </div>
       </div>
 
@@ -281,7 +281,7 @@ export default function StudentsMgmt() {
         <div onClick={() => setIsCreateModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
-              <h3 className="text-xl font-bold">Create New Student</h3>
+              <h3 className="text-xl font-bold">Create New Member</h3>
               <button onClick={() => setIsCreateModalOpen(false)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
                 <FiX size={24} />
               </button>
@@ -291,8 +291,8 @@ export default function StudentsMgmt() {
                 <label className="block text-sm font-medium mb-1">Full Name (Optional)</label>
                 <input 
                   type="text" 
-                  value={newStudent.name}
-                  onChange={e => setNewStudent({...newStudent, name: e.target.value})}
+                  value={newMember.name}
+                  onChange={e => setNewMember({...newMember, name: e.target.value})}
                   className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
                   placeholder="John Doe"
                 />
@@ -302,8 +302,8 @@ export default function StudentsMgmt() {
                 <input 
                   type="email" 
                   required
-                  value={newStudent.email}
-                  onChange={e => setNewStudent({...newStudent, email: e.target.value})}
+                  value={newMember.email}
+                  onChange={e => setNewMember({...newMember, email: e.target.value})}
                   className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
                   placeholder="john@example.com"
                 />
@@ -330,15 +330,15 @@ export default function StudentsMgmt() {
       )}
 
       {/* 2. Edit User Modal */}
-      {isEditModalOpen && editStudent && (
-        <div onClick={() => { setIsEditModalOpen(false); setEditStudent(null); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      {isEditModalOpen && editMember && (
+        <div onClick={() => { setIsEditModalOpen(false); setEditMember(null); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
-              <h3 className="text-xl font-bold">Edit Student</h3>
+              <h3 className="text-xl font-bold">Edit Member</h3>
               <button 
                 onClick={() => {
                   setIsEditModalOpen(false);
-                  setEditStudent(null);
+                  setEditMember(null);
                 }} 
                 className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
@@ -351,8 +351,8 @@ export default function StudentsMgmt() {
                 <input 
                   type="text" 
                   required
-                  value={editStudent.name}
-                  onChange={e => setEditStudent({...editStudent, name: e.target.value})}
+                  value={editMember.name}
+                  onChange={e => setEditMember({...editMember, name: e.target.value})}
                   className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
                 />
               </div>
@@ -361,8 +361,8 @@ export default function StudentsMgmt() {
                 <input 
                   type="email" 
                   required
-                  value={editStudent.email}
-                  onChange={e => setEditStudent({...editStudent, email: e.target.value})}
+                  value={editMember.email}
+                  onChange={e => setEditMember({...editMember, email: e.target.value})}
                   className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
                 />
               </div>
@@ -372,7 +372,7 @@ export default function StudentsMgmt() {
                   type="button" 
                   onClick={() => {
                     setIsEditModalOpen(false);
-                    setEditStudent(null);
+                    setEditMember(null);
                   }}
                   className="px-4 py-2 font-medium rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                 >
@@ -395,7 +395,7 @@ export default function StudentsMgmt() {
         <div onClick={() => { setIsCsvModalOpen(false); setUploadError(""); setUploadSuccess(""); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
-              <h3 className="text-xl font-bold">Batch Upload Students</h3>
+              <h3 className="text-xl font-bold">Batch Upload Members</h3>
               <button 
                 onClick={() => {
                   setIsCsvModalOpen(false);
