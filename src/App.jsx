@@ -23,6 +23,8 @@ const DashboardRouter = () => {
   return admin?.isSuperadmin ? <SuperDashboard /> : <Dashboard />;
 };
 
+import NotFound from "./pages/NotFound";
+
 function App() {
   const { admin } = useAuth();
 
@@ -44,6 +46,8 @@ function App() {
         <Route path="organizations" element={admin?.isSuperadmin ? <OrganizationsMgmt /> : <Navigate to="/" replace />} />
         <Route path="platform-users" element={admin?.isSuperadmin ? <PlatformUsers /> : <Navigate to="/" replace />} />
       </Route>
+      {/* 404 Catch All */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

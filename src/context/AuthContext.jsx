@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import api from "../utils/api";
 
 /* eslint-disable react/prop-types */
 
@@ -19,33 +20,25 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (email, password) => {
-    // 1. Try to login as a standard Organizational Admin
-    const admins = JSON.parse(localStorage.getItem('hwa_admins') || '[]');
-    const foundAdmin = admins.find(a => a.email === email && a.password === password);
-    
-    if (foundAdmin) {
-      const orgs = JSON.parse(localStorage.getItem('hwa_organizations') || '[]');
-      const org = orgs.find(o => o.id === foundAdmin.orgId);
+  const login = async (email, password) => {
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { user, token } = response.data.data;
       
-      const sessionData = { ...foundAdmin, organization: org, isSuperadmin: false };
+      const sessionData = { 
+        ...user, 
+        token,
+        isSuperadmin: user.role === 'SUPERADMIN',
+        organization: user.organization 
+      };
+      
       setAdmin(sessionData);
       localStorage.setItem('hwa_admin_session', JSON.stringify(sessionData));
       return true;
+    } catch (error) {
+      console.error('Login failed:', error);
+      return false;
     }
-
-    // 2. Try to login as a global Superadmin
-    const superadmins = JSON.parse(localStorage.getItem('hwa_superadmins') || '[]');
-    const foundSuperadmin = superadmins.find(s => s.email === email && s.password === password);
-
-    if (foundSuperadmin) {
-      const sessionData = { ...foundSuperadmin, isSuperadmin: true };
-      setAdmin(sessionData);
-      localStorage.setItem('hwa_admin_session', JSON.stringify(sessionData));
-      return true;
-    }
-
-    return false;
   };
 
   const logout = () => {
@@ -53,23 +46,19 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('hwa_admin_session');
   };
 
-  const updateProfile = (updatedFields) => {
+  const updateProfile = async (updatedFields) => {
     if (!admin) return;
     
-    // Update active session locally
-    const newSession = { ...admin, ...updatedFields };
-    setAdmin(newSession);
-    localStorage.setItem('hwa_admin_session', JSON.stringify(newSession));
-    
-    // Sync with the Mock DB Array
-    if (admin.isSuperadmin) {
-      const superadmins = JSON.parse(localStorage.getItem('hwa_superadmins') || '[]');
-      const updatedList = superadmins.map(s => s.id === admin.id ? { ...s, ...updatedFields } : s);
-      localStorage.setItem('hwa_superadmins', JSON.stringify(updatedList));
-    } else {
-      const admins = JSON.parse(localStorage.getItem('hwa_admins') || '[]');
-      const updatedList = admins.map(a => a.id === admin.id ? { ...a, ...updatedFields } : a);
-      localStorage.setItem('hwa_admins', JSON.stringify(updatedList));
+    try {
+      // NOTE: We'll assume a /profile endpoint exists on the backend
+      const response = await api.patch('/profile', updatedFields);
+      // Update active session locally
+      const newSession = { ...admin, ...response.data.data, token: admin.token };
+      setAdmin(newSession);
+      localStorage.setItem('hwa_admin_session', JSON.stringify(newSession));
+    } catch (error) {
+      console.error('Profile update failed', error);
+      throw error;
     }
   };
 
