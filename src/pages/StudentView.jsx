@@ -51,31 +51,39 @@ export default function StudentView() {
         windowWidth: reportRef.current.scrollWidth,
         windowHeight: reportRef.current.scrollHeight,
         onclone: (clonedDoc) => {
-          // Exhaustive fix for html2canvas failing on Tailwind 4 oklch() colors.
-          // This replaces ALL occurrences in the cloned document's styles, HTML, and attributes.
+          // Deep fix for html2canvas failing on Tailwind 4 oklch() colors.
           const oklchRegex = /oklch\s*\([^)]+\)/gi;
           const fallback = '#777';
           
+          // 1. Manually purge oklch from all parsed styleSheet rules
+          // This is the most effective way to prevent the html2canvas CSS parser from crashing
+          for (let i = 0; i < clonedDoc.styleSheets.length; i++) {
+            const sheet = clonedDoc.styleSheets[i];
+            try {
+              const rules = sheet.cssRules || sheet.rules;
+              if (!rules) continue;
+              for (let j = rules.length - 1; j >= 0; j--) {
+                if (rules[j].cssText && oklchRegex.test(rules[j].cssText)) {
+                  try {
+                    sheet.deleteRule(j);
+                  } catch (err) { /* ignore */ }
+                }
+              }
+            } catch (e) { /* cross-origin styles might throw */ }
+          }
+
+          // 2. Also patch style tags and body HTML as a secondary safety measure
           try {
-            // Patch all style tags
             const styleTags = clonedDoc.getElementsByTagName('style');
             for (let i = 0; i < styleTags.length; i++) {
               styleTags[i].textContent = styleTags[i].textContent.replace(oklchRegex, fallback);
             }
-            
-            // Patch the entire body HTML string
             clonedDoc.body.innerHTML = clonedDoc.body.innerHTML.replace(oklchRegex, fallback);
-
-            // Patch all inline styles that might be on the root or other elements
-            clonedDoc.querySelectorAll('*').forEach(el => {
+            clonedDoc.querySelectorAll('[style]').forEach(el => {
               const s = el.getAttribute('style');
-              if (s && /oklch/i.test(s)) {
-                el.setAttribute('style', s.replace(oklchRegex, fallback));
-              }
+              if (s && oklchRegex.test(s)) el.setAttribute('style', s.replace(oklchRegex, fallback));
             });
-          } catch {
-            console.warn("PDF Patch: Failed to fully sanitize oklch colors");
-          }
+          } catch { /* ignore */ }
         }
       });
       
