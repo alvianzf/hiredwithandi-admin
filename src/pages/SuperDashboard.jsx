@@ -12,22 +12,8 @@ export default function SuperDashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [orgRes, usersRes] = await Promise.all([
-          api.get('/organizations'),
-          api.get('/users')
-        ]);
-        
-        const orgs = orgRes.data.data;
-        const users = usersRes.data.data;
-        
-        const admins = users.filter((u) => u.role === 'ADMIN');
-        const members = users.filter((u) => u.role === 'MEMBER');
-
-        setStats({
-          totalOrgs: orgs.length,
-          totalActiveAdmins: admins.length,
-          totalPlatformUsers: members.length
-        });
+        const res = await api.get('/stats');
+        setStats(res.data.data);
       } catch (error) {
         console.error("Failed to load super dashboard stats", error);
       }
@@ -45,17 +31,22 @@ export default function SuperDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-        <div className="glass p-6 rounded-xl flex flex-col justify-center items-center shadow-lg transition-transform hover:scale-105 border-[var(--color-primary-yellow)] border-opacity-50">
+        <div className="glass p-6 rounded-xl flex flex-col justify-center items-center shadow-lg transition-transform hover:scale-105 border-[var(--color-primary-yellow)] border-opacity-50 text-center">
           <h3 className="text-xs text-[var(--text-secondary)] font-bold mb-2 uppercase tracking-widest">Active Orgs</h3>
-          <p className="text-5xl font-black text-[var(--color-primary-yellow)] text-center">{stats.totalOrgs}</p>
+          <p className="text-5xl font-black text-[var(--color-primary-yellow)]">
+            {stats.activeOrganizations || 0}
+          </p>
+          <p className="text-sm font-bold text-[var(--text-secondary)] mt-2">
+            out of {stats.totalOrganizations || 0} Total
+          </p>
         </div>
         <div className="glass p-6 rounded-xl flex flex-col justify-center items-center shadow-lg transition-transform hover:scale-105">
           <h3 className="text-xs text-[var(--text-secondary)] font-bold mb-2 uppercase tracking-widest">Org Admins</h3>
-          <p className="text-5xl font-black text-[var(--text-primary)] text-center">{stats.totalActiveAdmins}</p>
+          <p className="text-5xl font-black text-[var(--text-primary)] text-center">{stats.totalAdmins || 0}</p>
         </div>
         <div className="glass p-6 rounded-xl flex flex-col justify-center items-center shadow-lg transition-transform hover:scale-105 border-white/10 dark:border-white/5">
           <h3 className="text-xs text-[var(--text-secondary)] font-bold mb-2 uppercase tracking-widest">Platform Users</h3>
-          <p className="text-5xl font-black text-blue-500 text-center">{stats.totalPlatformUsers}</p>
+          <p className="text-5xl font-black text-blue-500 text-center">{stats.totalPlatformUsers || 0}</p>
         </div>
       </div>
 
