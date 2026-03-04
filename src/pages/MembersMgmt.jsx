@@ -255,27 +255,29 @@ export default function MembersMgmt() {
           <p className="text-[var(--text-secondary)] mt-1">Manage users in {admin?.organization?.name || "your organization"}.</p>
         </div>
         
-        <div className="flex flex-wrap gap-3">
-          <button 
-            onClick={() => setIsBatchesModalOpen(true)}
-            className="bg-black/10 dark:bg-white/10 text-[var(--text-primary)] px-4 py-2 rounded-lg font-medium hover:bg-black/20 dark:hover:bg-white/20 transition-colors shadow-sm inline-flex items-center"
-          >
-            Manage Batches
-          </button>
-          <button 
-            onClick={() => setIsCsvModalOpen(true)}
-            className="bg-[var(--color-primary-yellow)] text-black px-4 py-2 rounded-lg font-medium hover:bg-yellow-500 transition-colors shadow-sm inline-flex items-center"
-          >
-            <FiUploadCloud className="mr-2" size={18} />
-            Upload CSV
-          </button>
-          <button 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="bg-[var(--color-primary-red)] text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors shadow-sm"
-          >
-            Create User
-          </button>
-        </div>
+        {!admin?.isDisabled && (
+          <div className="flex flex-wrap gap-3">
+            <button 
+              onClick={() => setIsBatchesModalOpen(true)}
+              className="bg-black/10 dark:bg-white/10 text-[var(--text-primary)] px-4 py-2 rounded-lg font-medium hover:bg-black/20 dark:hover:bg-white/20 transition-colors shadow-sm inline-flex items-center"
+            >
+              Manage Batches
+            </button>
+            <button 
+              onClick={() => setIsCsvModalOpen(true)}
+              className="bg-[var(--color-primary-yellow)] text-black px-4 py-2 rounded-lg font-medium hover:bg-yellow-500 transition-colors shadow-sm inline-flex items-center"
+            >
+              <FiUploadCloud className="mr-2" size={18} />
+              Upload CSV
+            </button>
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-[var(--color-primary-red)] text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors shadow-sm"
+            >
+              Create User
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="glass rounded-xl overflow-hidden shadow-xl">
@@ -354,24 +356,28 @@ export default function MembersMgmt() {
                       >
                         <FiExternalLink size={14} /> View
                       </Link>
-                      <button 
-                        onClick={() => openEditModal(member)}
-                        className="text-neutral-400 hover:text-white font-medium transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => handleResetPassword(member)}
-                        className="text-orange-500 hover:text-orange-400 font-medium transition-colors"
-                      >
-                        Reset Pwd
-                      </button>
-                      <button 
-                        onClick={() => toggleMemberStatus(member)}
-                        className={`${member.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'} font-medium transition-colors`}
-                      >
-                        {member.status === 'ACTIVE' ? 'Disable' : 'Enable'}
-                      </button>
+                      {!admin?.isDisabled && (
+                        <>
+                          <button 
+                            onClick={() => openEditModal(member)}
+                            className="text-neutral-400 hover:text-white font-medium transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => handleResetPassword(member)}
+                            className="text-orange-500 hover:text-orange-400 font-medium transition-colors"
+                          >
+                            Reset Pwd
+                          </button>
+                          <button 
+                            onClick={() => toggleMemberStatus(member)}
+                            className={`${member.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'} font-medium transition-colors`}
+                          >
+                            {member.status === 'ACTIVE' ? 'Disable' : 'Enable'}
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -644,12 +650,17 @@ export default function MembersMgmt() {
                           </span>
                         </td>
                         <td className="p-4 text-right">
-                          <button 
-                            onClick={() => toggleBatchStatus(batch)}
-                            className={`${batch.status === 'ACTIVE' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'} px-3 py-1.5 rounded-lg font-medium transition-colors`}
-                          >
-                            {batch.status === 'ACTIVE' ? 'Disable' : 'Enable'}
-                          </button>
+                          {!admin?.isDisabled && (
+                            <button 
+                              onClick={() => toggleBatchStatus(batch)}
+                              className={`${batch.status === 'ACTIVE' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'} px-3 py-1.5 rounded-lg font-medium transition-colors`}
+                            >
+                              {batch.status === 'ACTIVE' ? 'Disable' : 'Enable'}
+                            </button>
+                          )}
+                          {admin?.isDisabled && (
+                            <span className="text-xs text-[var(--text-secondary)] font-medium italic">Read-only</span>
+                          )}
                         </td>
                       </tr>
                     ))}
