@@ -147,7 +147,7 @@ export default function MembersMgmt() {
         }
 
         try {
-          await api.post('/users/batch', {
+          await api.post('/batch-members', {
             orgId: admin.orgId,
             members: newEntries
           });
