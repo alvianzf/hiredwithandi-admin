@@ -5,6 +5,7 @@ import { FiX, FiCheck, FiUploadCloud, FiExternalLink } from "react-icons/fi";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import api from "../utils/api";
+import Swal from 'sweetalert2';
 
 export default function MembersMgmt() {
   const { admin } = useAuth();
@@ -25,6 +26,8 @@ export default function MembersMgmt() {
   const [csvBatchId, setCsvBatchId] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState("");
+
+  const [isBatchesModalOpen, setIsBatchesModalOpen] = useState(false);
 
   const loadBatches = useCallback(async () => {
     if (admin?.orgId) {
@@ -75,7 +78,10 @@ export default function MembersMgmt() {
   };
 
   const openEditModal = (member) => {
-    setEditMember({ ...member });
+    setEditMember({ 
+      ...member, 
+      batchId: member.batch?.id || member.batchId || ""
+    });
     setIsEditModalOpen(true);
   };
 
@@ -99,13 +105,74 @@ export default function MembersMgmt() {
   };
 
   const toggleMemberStatus = async (member) => {
-    try {
-      const newStatus = member.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
-      await api.patch(`/users/${member.id}`, { status: newStatus });
-      toast.success(`Member ${newStatus.toLowerCase()} successfully`);
-      loadMembers();
-    } catch {
-      toast.error("Failed to change member status");
+    const newStatus = member.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+    const action = member.status === 'ACTIVE' ? 'disable' : 'enable';
+
+    const result = await Swal.fire({
+      title: `Are you sure?`,
+      text: `Do you want to ${action} ${member.name}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ffb800',
+      cancelButtonColor: '#ea4335',
+      confirmButtonText: `Yes, ${action} them!`
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.patch(`/users/${member.id}`, { status: newStatus });
+        toast.success(`Member ${action}d successfully`);
+        loadMembers();
+      } catch {
+        toast.error(`Failed to ${action} member`);
+      }
+    }
+  };
+
+  const handleResetPassword = async (member) => {
+    const result = await Swal.fire({
+      title: `Reset Password?`,
+      text: `This will clear ${member.name}'s password and force them to set up a new one on their next login. Are you sure?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ea4335',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: `Yes, reset it!`
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.post(`/users/${member.id}/reset-password`);
+        toast.success(`Password reset for ${member.name}`);
+      } catch {
+        toast.error(`Failed to reset password`);
+      }
+    }
+  };
+
+  const toggleBatchStatus = async (batch) => {
+    const newStatus = batch.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+    const action = batch.status === 'ACTIVE' ? 'disable' : 'enable';
+
+    const result = await Swal.fire({
+      title: `Are you sure?`,
+      text: `Do you want to ${action} the batch "${batch.name}"? This will automatically ${action} all members inside this batch.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ffb800',
+      cancelButtonColor: '#ea4335',
+      confirmButtonText: `Yes, ${action} it!`
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.patch(`/batches/${batch.id}`, { status: newStatus });
+        toast.success(`Batch ${action}d successfully`);
+        loadBatches();
+        loadMembers(); // reload members to reflect cascaded status changes
+      } catch {
+        toast.error(`Failed to ${action} batch`);
+      }
     }
   };
 
@@ -189,6 +256,12 @@ export default function MembersMgmt() {
         </div>
         
         <div className="flex flex-wrap gap-3">
+          <button 
+            onClick={() => setIsBatchesModalOpen(true)}
+            className="bg-black/10 dark:bg-white/10 text-[var(--text-primary)] px-4 py-2 rounded-lg font-medium hover:bg-black/20 dark:hover:bg-white/20 transition-colors shadow-sm inline-flex items-center"
+          >
+            Manage Batches
+          </button>
           <button 
             onClick={() => setIsCsvModalOpen(true)}
             className="bg-[var(--color-primary-yellow)] text-black px-4 py-2 rounded-lg font-medium hover:bg-yellow-500 transition-colors shadow-sm inline-flex items-center"
@@ -286,6 +359,12 @@ export default function MembersMgmt() {
                         className="text-neutral-400 hover:text-white font-medium transition-colors"
                       >
                         Edit
+                      </button>
+                      <button 
+                        onClick={() => handleResetPassword(member)}
+                        className="text-orange-500 hover:text-orange-400 font-medium transition-colors"
+                      >
+                        Reset Pwd
                       </button>
                       <button 
                         onClick={() => toggleMemberStatus(member)}
@@ -518,6 +597,65 @@ export default function MembersMgmt() {
                 </label>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Manage Batches Modal */}
+      {isBatchesModalOpen && (
+        <div onClick={() => setIsBatchesModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
+              <h3 className="text-xl font-bold">Manage Batches</h3>
+              <button 
+                onClick={() => setIsBatchesModalOpen(false)} 
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <FiX size={24} />
+              </button>
+            </div>
+            
+            <div className="p-0 overflow-y-auto flex-1">
+              {batches.length === 0 ? (
+                <div className="p-8 text-center text-[var(--text-secondary)]">
+                  No batches found for this organization.
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/5 dark:bg-white/5 border-b border-[var(--border-color)]">
+                      <th className="p-4 font-semibold">Batch Name</th>
+                      <th className="p-4 font-semibold">Status</th>
+                      <th className="p-4 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {batches.map(batch => (
+                      <tr key={batch.id} className={`border-b border-[var(--border-color)] ${batch.status === 'DISABLED' ? 'opacity-50' : ''}`}>
+                        <td className="p-4 font-medium">{batch.name}</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-widest ${
+                            batch.status === 'ACTIVE' 
+                              ? 'bg-green-500/20 text-green-500' 
+                              : 'bg-red-500/20 text-red-500'
+                          }`}>
+                            {batch.status || 'ACTIVE'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <button 
+                            onClick={() => toggleBatchStatus(batch)}
+                            className={`${batch.status === 'ACTIVE' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'} px-3 py-1.5 rounded-lg font-medium transition-colors`}
+                          >
+                            {batch.status === 'ACTIVE' ? 'Disable' : 'Enable'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>

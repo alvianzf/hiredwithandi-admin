@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiX, FiCheck, FiSearch, FiUserPlus, FiShield } from "react-icons/fi";
 import { toast } from "sonner";
 import api from "../utils/api";
+import Swal from 'sweetalert2';
 
 export default function PlatformUsers() {
   const [users, setUsers] = useState([]);
@@ -39,11 +40,6 @@ export default function PlatformUsers() {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  const getOrgName = (user) => {
-    if (user.role === "SUPERADMIN") return "System (Global)";
-    return user.organization?.name || "Unknown Org";
-  };
 
   const openEditModal = (user) => {
     setEditUser({ ...user });
@@ -91,15 +87,54 @@ export default function PlatformUsers() {
   };
 
   const toggleUserStatus = async (user) => {
-    try {
-      const currentStatus = user.status || 'ACTIVE';
-      const newStatus = currentStatus === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
-      await api.patch(`/users/${user.id}`, { status: newStatus });
-      toast.success(`User ${newStatus.toLowerCase()} successfully`);
-      loadData();
-    } catch {
-      toast.error("Failed to change user status");
+    const newStatus = user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+    const action = user.status === 'ACTIVE' ? 'disable' : 'enable';
+    
+    const result = await Swal.fire({
+      title: `Are you sure?`,
+      text: `Do you want to ${action} ${user.name}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ffb800',
+      cancelButtonColor: '#ea4335',
+      confirmButtonText: `Yes, ${action} them!`
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.patch(`/users/${user.id}`, { status: newStatus });
+        toast.success(`User ${action}d successfully`);
+        loadData(); // Changed from fetchUsers() to loadData()
+      } catch {
+        toast.error(`Failed to ${action} user`);
+      }
     }
+  };
+
+  const handleResetPassword = async (user) => {
+    const result = await Swal.fire({
+      title: `Reset Password?`,
+      text: `This will clear ${user.name}'s password and force them to set up a new one on their next login. Are you sure?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ea4335',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: `Yes, reset it!`
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.post(`/users/${user.id}/reset-password`);
+        toast.success(`Password reset for ${user.name}`);
+      } catch {
+        toast.error(`Failed to reset password`);
+      }
+    }
+  }
+
+  const getOrgName = (user) => {
+    if (user.role === "SUPERADMIN") return "System (Global)";
+    return user.organization?.name || "Unknown Org";
   };
 
   const filteredUsers = users.filter(u => {
@@ -235,6 +270,12 @@ export default function PlatformUsers() {
                           className="text-yellow-600 dark:text-yellow-500 hover:text-yellow-700 font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg"
                         >
                           Edit
+                        </button>
+                        <button 
+                          onClick={() => handleResetPassword(user)}
+                          className="text-orange-600 dark:text-orange-500 hover:text-orange-700 font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg"
+                        >
+                          Reset Pwd
                         </button>
                         <button 
                           onClick={() => toggleUserStatus(user)}
