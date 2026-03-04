@@ -20,6 +20,7 @@
     --border-color: rgba(0, 0, 0, 0.08);
     --glass-border: rgba(255, 255, 255, 0.8);
     --selection-bg: rgba(255, 184, 0, 0.3);
+    color-scheme: light;
   }
 
   .dark {
@@ -30,6 +31,7 @@
     --border-color: rgba(255, 255, 255, 0.08);
     --glass-border: rgba(255, 255, 255, 0.05);
     --selection-bg: rgba(255, 184, 0, 0.3);
+    color-scheme: dark;
   }
 
   body {
