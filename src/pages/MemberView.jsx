@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { FiArrowLeft, FiDownload } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
 import { jsPDF } from "jspdf";
 import domtoimage from "dom-to-image-more";
 import { toast } from "sonner";
 import api from "../utils/api";
 
 export default function MemberView() {
+  const { admin } = useAuth();
   const { id } = useParams();
   const [member, setMember] = useState(null);
   const [stats, setStats] = useState(null);
