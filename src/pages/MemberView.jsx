@@ -150,6 +150,11 @@ export default function MemberView() {
               <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-blue-500 text-white">
                 Member ID: {member.id.substring(4, 12)}
               </span>
+              {member.batch && (
+                <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-purple-500 text-white">
+                  Batch: {member.batch.name}
+                </span>
+              )}
             </div>
           </div>
         </div>
