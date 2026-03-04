@@ -2,10 +2,13 @@
 
 ![Version](https://img.shields.io/badge/version-v0.5-blue)
 ![CI/CD](https://github.com/alvianzf/hiredwithandi-admin/actions/workflows/ci-cd.yml/badge.svg?branch=main)
-![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
-![Lucide](https://img.shields.io/badge/Lucide-white?style=flat&logo=lucide&logoColor=black)
+![React](https://img.shields.io/badge/React-v18.3-61DAFB?style=flat&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-v5.4-646CFF?style=flat&logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.2-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
+![Lucide](https://img.shields.io/badge/Lucide-v0.575-white?style=flat&logo=lucide&logoColor=black)
+![Axios](https://img.shields.io/badge/Axios-v1.13-5A29E4?style=flat&logo=axios&logoColor=white)
+![jsPDF](https://img.shields.io/badge/jsPDF-v4.2-red?style=flat)
+![PapaParse](https://img.shields.io/badge/PapaParse-v5.5-blue?style=flat)
 
 ![App Preview](public/docs/organizations-mgmt.png)
 
