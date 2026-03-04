@@ -234,6 +234,17 @@ export default function AdminLayout() {
 
         {/* Page Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 bg-transparent">
+          {admin?.isDisabled && (
+            <div className="mb-6 flex items-center gap-4 rounded-3xl bg-red-500/10 border border-red-500/20 px-6 py-5 text-red-400 shadow-xl shadow-red-500/5 animate-in slide-in-from-top-4 duration-500">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/20 text-red-500 flex-shrink-0">
+                <FiX size={24} />
+              </div>
+              <div>
+                <p className="text-base font-bold uppercase tracking-widest leading-none mb-1">Account Disabled (Read-Only)</p>
+                <p className="text-sm font-medium text-red-400/70">Your organization or administrative account has been disabled. You can view data but all management actions are restricted.</p>
+              </div>
+            </div>
+          )}
           <Outlet />
         </main>
       </div>
