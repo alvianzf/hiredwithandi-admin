@@ -13,7 +13,9 @@ export default function OrganizationsMgmt() {
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [batches, setBatches] = useState([]);
   
-  // New Org State
+  // Admin Edit State
+  const [isEditAdminModalOpen, setIsEditAdminModalOpen] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState(null);
   const [orgName, setOrgName] = useState("");
   const [adminName, setAdminName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -154,6 +156,29 @@ export default function OrganizationsMgmt() {
     }
   };
 
+  const openEditAdminModal = (admin) => {
+    setEditingAdmin({ ...admin });
+    setIsEditAdminModalOpen(true);
+  };
+
+  const handleEditAdmin = async (e) => {
+    e.preventDefault();
+    if (!editingAdmin?.name || !editingAdmin?.email) return;
+
+    try {
+      await api.patch(`/users/${editingAdmin.id}`, {
+        name: editingAdmin.name,
+        email: editingAdmin.email
+      });
+      toast.success("Administrator updated");
+      loadData();
+      setIsEditAdminModalOpen(false);
+      setEditingAdmin(null);
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to update admin");
+    }
+  };
+
   const removeAdmin = async (adminId) => {
     try {
       await api.patch(`/users/${adminId}`, { status: "DISABLED" });
@@ -269,15 +294,19 @@ export default function OrganizationsMgmt() {
                   <FiUsers className="text-[var(--text-secondary)] mt-1 shrink-0" />
                   <div>
                     <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-wider mb-2">Administrators ({orgAdmins.length})</p>
-                    <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
                       {orgAdmins.length === 0 ? (
                         <p className="font-medium text-[var(--text-secondary)] italic text-sm">No admins assigned</p>
                       ) : (
                         orgAdmins.map(admin => (
-                          <div key={admin.id} className="bg-black/5 dark:bg-white/5 p-2 rounded-lg border border-[var(--border-color)]">
-                            <p className="font-medium text-[var(--text-primary)] text-sm">{admin.name}</p>
-                            <p className="text-xs text-blue-400">{admin.email}</p>
-                          </div>
+                          <button 
+                            key={admin.id} 
+                            onClick={() => openEditAdminModal(admin)}
+                            className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-[var(--border-color)] text-left hover:border-[var(--color-primary-yellow)] hover:bg-[var(--color-primary-yellow)]/5 transition-all group/admin"
+                          >
+                            <p className="font-bold text-[var(--text-primary)] text-xs group-hover/admin:text-[var(--color-primary-yellow)]">{admin.name}</p>
+                            <p className="text-[10px] text-[var(--text-secondary)] truncate max-w-[120px]">{admin.email}</p>
+                          </button>
                         ))
                       )}
                     </div>
@@ -382,7 +411,61 @@ export default function OrganizationsMgmt() {
         </div>
       )}
 
-      {/* Manage Settings Modal */}
+      {/* Edit Admin Modal */}
+      {isEditAdminModalOpen && editingAdmin && (
+        <div onClick={() => { setIsEditAdminModalOpen(false); setEditingAdmin(null); }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
+              <h3 className="text-xl font-bold text-[var(--color-primary-yellow)]">Edit Administrator</h3>
+              <button 
+                onClick={() => { setIsEditAdminModalOpen(false); setEditingAdmin(null); }}
+                className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditAdmin} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editingAdmin.name}
+                  onChange={(e) => setEditingAdmin({...editingAdmin, name: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={editingAdmin.email}
+                  onChange={(e) => setEditingAdmin({...editingAdmin, email: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div className="pt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setIsEditAdminModalOpen(false); setEditingAdmin(null); }}
+                  className="px-5 py-2.5 rounded-xl font-medium text-[var(--text-secondary)] hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl font-bold bg-[var(--color-primary-yellow)] text-black hover:bg-[#e6a600] flex items-center gap-2 shadow-lg transition-transform hover:scale-105"
+                >
+                  <FiCheck /> Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {isManageModalOpen && selectedOrg && (
         <div onClick={() => setIsManageModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
           <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
