@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FiX, FiCheck, FiUploadCloud, FiExternalLink } from "react-icons/fi";
+import { FiX, FiCheck, FiUploadCloud, FiExternalLink, FiSearch, FiLock } from "react-icons/fi";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import api from "../utils/api";
@@ -18,7 +18,7 @@ export default function MembersMgmt() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
-  const limit = 10;
+  const [limit, setLimit] = useState(10);
   
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -53,7 +53,9 @@ export default function MembersMgmt() {
           params: {
             page,
             limit,
-            batchId: batchFilter || undefined
+            batchId: batchFilter || undefined,
+            search: search || undefined,
+            status: statusFilter !== "All" ? statusFilter : undefined
           }
         });
         setMembers(res.data.data);
@@ -63,7 +65,7 @@ export default function MembersMgmt() {
         toast.error("Failed to load members");
       }
     }
-  }, [admin, batchFilter]);
+  }, [admin, batchFilter, limit, search, statusFilter]);
 
   useEffect(() => {
     loadBatches();
@@ -265,14 +267,65 @@ export default function MembersMgmt() {
     e.target.value = null; // reset file input so the same file can be chosen again
   };
 
-  const filteredMembers = members.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
-                          s.email.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || s.status === statusFilter.toUpperCase();
-    return matchesSearch && matchesStatus;
-  });
 
   const totalPages = Math.ceil(totalMembers / limit);
+
+  const PaginationControls = () => (
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm py-3 px-6 bg-black/5 dark:bg-white/5 border-b border-[var(--border-color)] first:border-t-0 last:border-b-0">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="text-[var(--text-secondary)]">
+          Showing {totalMembers === 0 ? 0 : ((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalMembers)} of {totalMembers} members
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--text-secondary)] whitespace-nowrap">Show:</span>
+          <select
+            value={limit}
+            onChange={(e) => {
+              setLimit(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="bg-[var(--bg-color)] border border-[var(--border-color)] rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[var(--color-primary-yellow)] outline-none"
+          >
+            {[10, 25, 50, 100].map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="flex items-center space-x-2">
+        <button
+          disabled={currentPage === 1}
+          onClick={() => loadMembers(currentPage - 1)}
+          className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+        >
+          Previous
+        </button>
+        {[...Array(totalPages)].map((_, i) => (
+          (i === 0 || i === totalPages - 1 || (i >= currentPage - 2 && i <= currentPage)) && (
+            <button
+              key={i + 1}
+              onClick={() => loadMembers(i + 1)}
+              className={`w-8 h-8 rounded-lg border transition-all ${
+                currentPage === i + 1
+                  ? "bg-[var(--color-primary-yellow)] text-black border-[var(--color-primary-yellow)] font-bold shadow-lg"
+                  : "bg-black/5 dark:bg-white/5 border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-black/10 dark:hover:bg-white/10"
+              }`}
+            >
+              {i + 1}
+            </button>
+          )
+        ))}
+        {totalPages > 5 && currentPage < totalPages - 2 && <span className="text-[var(--text-secondary)]">...</span>}
+        <button
+          disabled={currentPage === totalPages || totalPages === 0}
+          onClick={() => loadMembers(currentPage + 1)}
+          className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -310,34 +363,43 @@ export default function MembersMgmt() {
       </div>
 
       <div className="glass rounded-xl overflow-hidden shadow-xl">
-        <div className="p-4 border-b border-[var(--border-color)] flex flex-col md:flex-row gap-4">
-          <input 
-            type="text" 
-            placeholder="Search members..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full md:w-1/3 px-4 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="select-styled w-full md:w-48"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Disabled">Disabled</option>
-          </select>
-          <select
-            value={batchFilter}
-            onChange={(e) => setBatchFilter(e.target.value)}
-            className="select-styled w-full md:w-56"
-          >
-            <option value="">All Batches</option>
-            {batches.map(b => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
+        <div className="p-6 border-b border-[var(--border-color)] space-y-4 bg-black/5 dark:bg-white/5">
+          <div className="relative">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
+            <input 
+              type="text" 
+              placeholder="Search members by name or email..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-all shadow-inner text-lg"
+            />
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors shadow-inner font-medium"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Disabled">Disabled</option>
+            </select>
+
+            <select
+              value={batchFilter}
+              onChange={(e) => setBatchFilter(e.target.value)}
+              className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors shadow-inner font-medium"
+            >
+              <option value="">All Batches</option>
+              {batches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        <PaginationControls />
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -351,14 +413,14 @@ export default function MembersMgmt() {
               </tr>
             </thead>
             <tbody>
-              {filteredMembers.length === 0 ? (
+              {members.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="p-8 text-center text-[var(--text-secondary)]">
                     No members found.
                   </td>
                 </tr>
               ) : (
-                filteredMembers.map(member => (
+                members.map(member => (
                   <tr key={member.id} className={`border-b border-[var(--border-color)] ${member.status === 'DISABLED' ? 'opacity-50' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
                     <td className="p-4 font-medium">{member.name}</td>
                     <td className="p-4 text-[var(--text-secondary)]">{member.email}</td>
@@ -395,9 +457,10 @@ export default function MembersMgmt() {
                           </button>
                           <button 
                             onClick={() => handleResetPassword(member)}
-                            className="text-orange-500 hover:text-orange-400 font-medium transition-colors"
+                            className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
+                            title="Reset Password"
                           >
-                            Reset Pwd
+                            <FiLock size={14} /> Reset
                           </button>
                           <button 
                             onClick={() => toggleMemberStatus(member)}
@@ -414,40 +477,7 @@ export default function MembersMgmt() {
             </tbody>
           </table>
         </div>
-        <div className="p-4 border-t border-[var(--border-color)] flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
-          <div className="text-[var(--text-secondary)]">
-            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalMembers)} of {totalMembers} members
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => loadMembers(currentPage - 1)}
-              className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-            >
-              Previous
-            </button>
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => loadMembers(i + 1)}
-                className={`w-8 h-8 rounded-lg border transition-all ${
-                  currentPage === i + 1
-                    ? "bg-[var(--color-primary-yellow)] text-black border-[var(--color-primary-yellow)] font-bold shadow-lg"
-                    : "bg-black/5 dark:bg-white/5 border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-black/10 dark:hover:bg-white/10"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => loadMembers(currentPage + 1)}
-              className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <PaginationControls />
       </div>
 
       {/* --- MODALS --- */}

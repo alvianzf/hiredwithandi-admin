@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { FiX, FiCheck, FiSearch, FiUserPlus, FiShield } from "react-icons/fi";
+import { FiX, FiCheck, FiSearch, FiUserPlus, FiShield, FiLock } from "react-icons/fi";
 import { toast } from "sonner";
 import api from "../utils/api";
 import Swal from 'sweetalert2';
@@ -14,11 +14,13 @@ export default function PlatformUsers() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [orgFilter, setOrgFilter] = useState("All");
   const [roleFilter, setRoleFilter] = useState("All");
+  const [batchFilter, setBatchFilter] = useState("All");
+  const [batches, setBatches] = useState([]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
-  const limit = 10;
+  const [limit, setLimit] = useState(10);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editUser, setEditUser] = useState(null);
@@ -36,6 +38,7 @@ export default function PlatformUsers() {
             search: search || undefined,
             role: roleFilter,
             orgId: orgFilter,
+            batchId: batchFilter !== "All" ? batchFilter : undefined,
             status: statusFilter
           }
         }),
@@ -48,10 +51,30 @@ export default function PlatformUsers() {
       setTotalUsers(usersRes.data.meta.total);
       setCurrentPage(usersRes.data.meta.page);
       setOrganizations(orgRes.data.data);
-    } catch {
+    } catch (err) {
+      console.error("PlatformUsers Load Error:", err);
       toast.error("Failed to load platform data");
     }
-  }, [search, roleFilter, orgFilter, statusFilter]);
+  }, [search, roleFilter, orgFilter, batchFilter, statusFilter, limit]);
+
+  const loadBatches = useCallback(async () => {
+    if (orgFilter === "All" || orgFilter === "sys") {
+      setBatches([]);
+      setBatchFilter("All");
+      return;
+    }
+    try {
+      const res = await api.get(`/organizations/${orgFilter}/batches`);
+      setBatches(res.data.data || []);
+    } catch (err) {
+      console.error("Failed to load batches", err);
+      setBatches([]);
+    }
+  }, [orgFilter]);
+
+  useEffect(() => {
+    loadBatches();
+  }, [loadBatches]);
 
   useEffect(() => {
     loadData(1);
@@ -155,6 +178,63 @@ export default function PlatformUsers() {
 
   const totalPages = Math.ceil(totalUsers / limit);
 
+  const PaginationControls = () => (
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm py-3 px-4 bg-black/5 dark:bg-white/5 border-b border-[var(--border-color)] first:border-t-0 last:border-b-0">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="text-[var(--text-secondary)]">
+          Showing {totalUsers === 0 ? 0 : ((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} global platform users
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--text-secondary)] whitespace-nowrap">Show:</span>
+          <select
+            value={limit}
+            onChange={(e) => {
+              setLimit(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="bg-[var(--bg-color)] border border-[var(--border-color)] rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[var(--color-primary-red)] outline-none"
+          >
+            {[10, 25, 50, 100].map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="flex items-center space-x-2">
+        <button
+          disabled={currentPage === 1}
+          onClick={() => loadData(currentPage - 1)}
+          className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+        >
+          Previous
+        </button>
+        {[...Array(totalPages)].map((_, i) => (
+          (i === 0 || i === totalPages - 1 || (i >= currentPage - 2 && i <= currentPage)) && (
+            <button
+              key={i + 1}
+              onClick={() => loadData(i + 1)}
+              className={`w-8 h-8 rounded-lg border transition-all ${
+                currentPage === i + 1
+                  ? "bg-[var(--color-primary-red)] text-white border-[var(--color-primary-red)] font-bold shadow-lg"
+                  : "bg-black/5 dark:bg-white/5 border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-black/10 dark:hover:bg-white/10"
+              }`}
+            >
+              {i + 1}
+            </button>
+          )
+        ))}
+        {totalPages > 5 && currentPage < totalPages - 2 && <span className="text-[var(--text-secondary)]">...</span>}
+        <button
+          disabled={currentPage === totalPages || totalPages === 0}
+          onClick={() => loadData(currentPage + 1)}
+          className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -176,52 +256,67 @@ export default function PlatformUsers() {
       </div>
 
       <div className="glass rounded-xl overflow-hidden shadow-xl">
-        <div className="p-4 border-b border-[var(--border-color)] grid grid-cols-1 md:grid-cols-4 gap-4 bg-black/5 dark:bg-white/5">
+        <div className="p-6 border-b border-[var(--border-color)] space-y-4 bg-black/5 dark:bg-white/5">
           <div className="relative">
-            <FiSearch className="absolute left-3 top-3.5 text-[var(--text-secondary)]" />
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
             <input 
               type="text" 
-              placeholder="Search users..." 
+              placeholder="Search by name or email..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner"
+              className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-all shadow-inner text-lg"
             />
           </div>
-          
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
-          >
-            <option value="All">All Roles</option>
-            <option value="Member">Member</option>
-            <option value="Org Admin">Org Admin</option>
-            <option value="Superadmin">Superadmin</option>
-          </select>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
+            >
+              <option value="All">All Roles</option>
+              <option value="Member">Member</option>
+              <option value="Org Admin">Org Admin</option>
+              <option value="Superadmin">Superadmin</option>
+            </select>
 
-          <select
-            value={orgFilter}
-            onChange={(e) => setOrgFilter(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
-          >
-            <option value="All">All Organizations</option>
-            <option value="sys">System (Global)</option>
-            {organizations.map(o => (
-              <option key={o.id} value={o.id}>{o.name}</option>
-            ))}
-          </select>
+            <select
+              value={orgFilter}
+              onChange={(e) => setOrgFilter(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
+            >
+              <option value="All">All Organizations</option>
+              <option value="sys">System (Global)</option>
+              {organizations.map(o => (
+                <option key={o.id} value={o.id}>{o.name}</option>
+              ))}
+            </select>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Disabled">Disabled</option>
-          </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Disabled">Disabled</option>
+            </select>
+
+            <select
+              value={batchFilter}
+              onChange={(e) => setBatchFilter(e.target.value)}
+              disabled={orgFilter === "All" || orgFilter === "sys"}
+              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium disabled:opacity-50"
+            >
+              <option value="All">All Batches</option>
+              {batches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         
+        <PaginationControls />
+
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -229,6 +324,7 @@ export default function PlatformUsers() {
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Name</th>
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Role</th>
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Organization</th>
+                <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)] text-center">Batch</th>
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Email</th>
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Last Login</th>
                 <th className="p-4 font-bold uppercase tracking-wider text-[var(--text-secondary)]">Status</th>
@@ -238,7 +334,7 @@ export default function PlatformUsers() {
             <tbody>
                {users.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-12 text-center text-[var(--text-secondary)]">
+                  <td colSpan="8" className="p-12 text-center text-[var(--text-secondary)]">
                     <p className="font-semibold text-lg">No users found.</p>
                     <p className="text-sm">Try relaxing your search or filter parameters.</p>
                   </td>
@@ -259,7 +355,16 @@ export default function PlatformUsers() {
                         </span>
                       </td>
                       <td className="p-4 text-sm font-medium text-[var(--text-primary)]">{getOrgName(user)}</td>
-                      <td className="p-4 text-[var(--text-secondary)] text-sm">{user.email}</td>
+                      <td className="p-4 text-center">
+                        {user.batch?.name ? (
+                          <span className="bg-[var(--color-primary-yellow)]/10 text-[var(--color-primary-yellow)] px-3 py-1 rounded-full text-xs font-bold border border-[var(--color-primary-yellow)]/20">
+                            {user.batch.name}
+                          </span>
+                        ) : (
+                          <span className="text-[var(--text-secondary)] italic text-xs">-</span>
+                        )}
+                      </td>
+                      <td className="p-4 font-medium">{user.email}</td>
                       <td className="p-4 text-[var(--text-secondary)] text-sm">
                         {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
                       </td>
@@ -273,19 +378,20 @@ export default function PlatformUsers() {
                         </span>
                       </td>
                       <td className="p-4 flex justify-center space-x-3 items-center">
-                        <button 
+                        <button
                           onClick={() => openEditModal(user)}
                           className="text-yellow-600 dark:text-yellow-500 hover:text-yellow-700 font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg"
                         >
                           Edit
                         </button>
-                        <button 
-                          onClick={() => handleResetPassword(user)}
-                          className="text-orange-600 dark:text-orange-500 hover:text-orange-700 font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg"
-                        >
-                          Reset Pwd
-                        </button>
-                        <button 
+                          <button
+                            onClick={() => handleResetPassword(user)}
+                            className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
+                            title="Reset Password"
+                          >
+                            <FiLock size={14} /> Reset
+                          </button>
+                        <button
                           onClick={() => toggleUserStatus(user)}
                           className={`${currentStatus === 'ACTIVE' ? 'text-red-600 dark:text-red-500 hover:text-red-700' : 'text-green-600 dark:text-green-500 hover:text-green-700'} font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg`}
                         >
@@ -299,40 +405,7 @@ export default function PlatformUsers() {
             </tbody>
           </table>
         </div>
-<div className="p-4 bg-black/5 dark:bg-white/5 border-t border-[var(--border-color)] flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
-          <div className="text-[var(--text-secondary)]">
-            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} global platform users
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => loadData(currentPage - 1)}
-              className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-            >
-              Previous
-            </button>
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => loadData(i + 1)}
-                className={`w-8 h-8 rounded-lg border transition-all ${
-                  currentPage === i + 1
-                    ? "bg-[var(--color-primary-red)] text-white border-[var(--color-primary-red)] font-bold shadow-lg"
-                    : "bg-black/5 dark:bg-white/5 border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-black/10 dark:hover:bg-white/10"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => loadData(currentPage + 1)}
-              className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <PaginationControls />
       </div>
 
       {/* Create User Modal */}
