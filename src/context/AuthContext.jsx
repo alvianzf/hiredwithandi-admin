@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
         token,
         refreshToken,
         isSuperadmin: user.role === 'SUPERADMIN',
+        isDisabled: user.isDisabled || user.status === 'DISABLED' || user.organization?.status === 'DISABLED',
         organization: user.role === 'SUPERADMIN' ? null : { id: user.orgId, name: user.organization }
       };
       
@@ -71,6 +72,7 @@ export const AuthProvider = ({ children }) => {
         token,
         refreshToken,
         isSuperadmin: user.role === 'SUPERADMIN',
+        isDisabled: user.isDisabled || user.status === 'DISABLED' || user.organization?.status === 'DISABLED',
         organization: user.role === 'SUPERADMIN' ? null : { id: user.orgId, name: user.organization }
       };
       
