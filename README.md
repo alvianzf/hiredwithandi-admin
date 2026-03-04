@@ -2,7 +2,7 @@
 
 ![CI/CD](https://github.com/alvianzf/hiredwithandi-admin/actions/workflows/ci-cd.yml/badge.svg)
 
-![App Preview](https://via.placeholder.com/800x400.png?text=HiredWithAndi+Admin)
+![App Preview](public/docs/organizations-mgmt.png)
 
 The **HiredWithAndi Admin Panel** is a React + Vite organization-oriented analytics dashboard built to complement the student-facing LearnWithAndi/HiredWithAndi ecosystem.
 
