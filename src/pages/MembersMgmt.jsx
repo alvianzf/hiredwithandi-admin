@@ -15,6 +15,11 @@ export default function MembersMgmt() {
   const [batchFilter, setBatchFilter] = useState("");
   const [batches, setBatches] = useState([]);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalMembers, setTotalMembers] = useState(0);
+  const limit = 10;
+  
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newMember, setNewMember] = useState({ name: "", email: "", batchId: "" });
@@ -28,6 +33,7 @@ export default function MembersMgmt() {
   const [uploadSuccess, setUploadSuccess] = useState("");
 
   const [isBatchesModalOpen, setIsBatchesModalOpen] = useState(false);
+  const [newBatchName, setNewBatchName] = useState("");
 
   const loadBatches = useCallback(async () => {
     if (admin?.orgId) {
@@ -40,21 +46,43 @@ export default function MembersMgmt() {
     }
   }, [admin]);
 
-  const loadMembers = useCallback(async () => {
+  const loadMembers = useCallback(async (page = 1) => {
     if (admin) {
       try {
-        const res = await api.get('/members');
-        setMembers(res.data.data.reverse());
+        const res = await api.get('/members', {
+          params: {
+            page,
+            limit,
+            batchId: batchFilter || undefined
+          }
+        });
+        setMembers(res.data.data);
+        setTotalMembers(res.data.meta.total);
+        setCurrentPage(res.data.meta.page);
       } catch {
         toast.error("Failed to load members");
       }
     }
-  }, [admin]);
+  }, [admin, batchFilter]);
 
   useEffect(() => {
     loadBatches();
-    loadMembers();
+    loadMembers(1);
   }, [loadBatches, loadMembers]);
+
+  const handleCreateBatch = async (e) => {
+    e.preventDefault();
+    if (!newBatchName.trim()) return;
+
+    try {
+      await api.post(`/organizations/${admin.orgId}/batches`, { name: newBatchName });
+      toast.success("Batch created successfully");
+      setNewBatchName("");
+      loadBatches();
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Failed to create batch");
+    }
+  };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
@@ -241,9 +269,10 @@ export default function MembersMgmt() {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
                           s.email.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "All" || s.status === statusFilter.toUpperCase();
-    const matchesBatch = !batchFilter || s.batchId === batchFilter;
-    return matchesSearch && matchesStatus && matchesBatch;
+    return matchesSearch && matchesStatus;
   });
+
+  const totalPages = Math.ceil(totalMembers / limit);
 
   return (
     <div className="space-y-6">
@@ -385,8 +414,39 @@ export default function MembersMgmt() {
             </tbody>
           </table>
         </div>
-        <div className="p-4 border-t border-[var(--border-color)] text-sm text-[var(--text-secondary)] text-center">
-          Showing {filteredMembers.length} of {members.length} members
+        <div className="p-4 border-t border-[var(--border-color)] flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
+          <div className="text-[var(--text-secondary)]">
+            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalMembers)} of {totalMembers} members
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => loadMembers(currentPage - 1)}
+              className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            >
+              Previous
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => loadMembers(i + 1)}
+                className={`w-8 h-8 rounded-lg border transition-all ${
+                  currentPage === i + 1
+                    ? "bg-[var(--color-primary-yellow)] text-black border-[var(--color-primary-yellow)] font-bold shadow-lg"
+                    : "bg-black/5 dark:bg-white/5 border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-black/10 dark:hover:bg-white/10"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => loadMembers(currentPage + 1)}
+              className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
@@ -622,6 +682,26 @@ export default function MembersMgmt() {
               </button>
             </div>
             
+            <div className="p-6 border-b border-[var(--border-color)]">
+              <h4 className="text-sm font-bold text-[var(--text-secondary)] mb-3 uppercase tracking-wider">Create New Batch</h4>
+              <form onSubmit={handleCreateBatch} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. Spring 2025"
+                  value={newBatchName}
+                  onChange={e => setNewBatchName(e.target.value)}
+                  className="flex-1 px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
+                />
+                <button
+                  type="submit"
+                  disabled={!newBatchName.trim()}
+                  className="bg-[var(--color-primary-yellow)] text-black px-4 py-2 rounded-lg font-bold hover:bg-yellow-500 transition-colors disabled:opacity-50"
+                >
+                  Create
+                </button>
+              </form>
+            </div>
+
             <div className="p-0 overflow-y-auto flex-1">
               {batches.length === 0 ? (
                 <div className="p-8 text-center text-[var(--text-secondary)]">
@@ -632,6 +712,7 @@ export default function MembersMgmt() {
                   <thead>
                     <tr className="bg-black/5 dark:bg-white/5 border-b border-[var(--border-color)]">
                       <th className="p-4 font-semibold">Batch Name</th>
+                      <th className="p-4 font-semibold text-center">Members</th>
                       <th className="p-4 font-semibold">Status</th>
                       <th className="p-4 font-semibold text-right">Actions</th>
                     </tr>
@@ -640,6 +721,11 @@ export default function MembersMgmt() {
                     {batches.map(batch => (
                       <tr key={batch.id} className={`border-b border-[var(--border-color)] ${batch.status === 'DISABLED' ? 'opacity-50' : ''}`}>
                         <td className="p-4 font-medium">{batch.name}</td>
+                        <td className="p-4 text-center">
+                          <span className="bg-black/10 dark:bg-white/10 px-2 py-0.5 rounded-full text-xs font-bold">
+                            {batch._count?.users || 0}
+                          </span>
+                        </td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-widest ${
                             batch.status === 'ACTIVE' 

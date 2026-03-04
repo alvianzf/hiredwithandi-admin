@@ -15,30 +15,46 @@ export default function PlatformUsers() {
   const [orgFilter, setOrgFilter] = useState("All");
   const [roleFilter, setRoleFilter] = useState("All");
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const limit = 10;
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editUser, setEditUser] = useState(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", role: "Org Admin", orgId: "" });
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (page = 1) => {
     try {
       const [usersRes, orgRes] = await Promise.all([
-        api.get("/users"),
+        api.get("/users", {
+          params: {
+            page,
+            limit,
+            search: search || undefined,
+            role: roleFilter,
+            orgId: orgFilter,
+            status: statusFilter
+          }
+        }),
         api.get("/organizations")
       ]);
       setUsers(usersRes.data.data.map(u => ({
         ...u, 
         systemRole: u.role === 'SUPERADMIN' ? 'Superadmin' : u.role === 'ADMIN' ? 'Org Admin' : 'Member'
       })));
+      setTotalUsers(usersRes.data.meta.total);
+      setCurrentPage(usersRes.data.meta.page);
       setOrganizations(orgRes.data.data);
     } catch {
       toast.error("Failed to load platform data");
     }
-  }, []);
+  }, [search, roleFilter, orgFilter, statusFilter]);
 
   useEffect(() => {
-    loadData();
+    loadData(1);
   }, [loadData]);
 
   const openEditModal = (user) => {
@@ -137,15 +153,7 @@ export default function PlatformUsers() {
     return user.organization?.name || "Unknown Org";
   };
 
-  const filteredUsers = users.filter(u => {
-    const matchesSearch = u.name?.toLowerCase().includes(search.toLowerCase()) || 
-                          u.email?.toLowerCase().includes(search.toLowerCase());
-    const currentStatus = u.status || 'ACTIVE';
-    const matchesStatus = statusFilter === "All" || currentStatus === statusFilter.toUpperCase();
-    const matchesOrg = orgFilter === "All" || (u.role === 'SUPERADMIN' && orgFilter === 'sys') || u.orgId === orgFilter;
-    const matchesRole = roleFilter === "All" || u.systemRole === roleFilter;
-    return matchesSearch && matchesStatus && matchesOrg && matchesRole;
-  });
+  const totalPages = Math.ceil(totalUsers / limit);
 
   return (
     <div className="space-y-6">
@@ -228,15 +236,15 @@ export default function PlatformUsers() {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.length === 0 ? (
+               {users.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-12 text-center text-[var(--text-secondary)]">
+                  <td colSpan="7" className="p-12 text-center text-[var(--text-secondary)]">
                     <p className="font-semibold text-lg">No users found.</p>
                     <p className="text-sm">Try relaxing your search or filter parameters.</p>
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map(user => {
+                users.map(user => {
                   const currentStatus = user.status || 'ACTIVE';
                   return (
                     <tr key={user.id} className={`border-b border-black/5 dark:border-white/5 ${currentStatus === 'DISABLED' ? 'opacity-50 grayscale' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
@@ -291,8 +299,39 @@ export default function PlatformUsers() {
             </tbody>
           </table>
         </div>
-        <div className="p-4 bg-black/5 dark:bg-white/5 border-t border-[var(--border-color)] text-sm font-medium text-[var(--text-secondary)] text-center">
-          Showing {filteredUsers.length} of {users.length} global platform users
+<div className="p-4 bg-black/5 dark:bg-white/5 border-t border-[var(--border-color)] flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
+          <div className="text-[var(--text-secondary)]">
+            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} global platform users
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => loadData(currentPage - 1)}
+              className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            >
+              Previous
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => loadData(i + 1)}
+                className={`w-8 h-8 rounded-lg border transition-all ${
+                  currentPage === i + 1
+                    ? "bg-[var(--color-primary-red)] text-white border-[var(--color-primary-red)] font-bold shadow-lg"
+                    : "bg-black/5 dark:bg-white/5 border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-black/10 dark:hover:bg-white/10"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => loadData(currentPage + 1)}
+              className="px-3 py-1 bg-black/5 dark:bg-white/5 rounded-lg border border-[var(--border-color)] disabled:opacity-50 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
