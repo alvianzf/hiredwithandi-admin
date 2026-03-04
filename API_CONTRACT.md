@@ -105,27 +105,51 @@ Stores the extended user profile including the base64 encoded avatar.
 }
 ```
 
-### `Admin & Superadmin User` (Stored in `hwa_admins` & `hwa_superadmins`)
+### `Admin & Superadmin User`
 
 ```json
 {
   "id": "string",
-  "orgId": "string (or 'sys' for Superadmins)",
   "name": "string",
   "email": "string",
-  "password": "string",
-  "role": "string (enum: 'admin', 'superadmin')"
+  "role": "string (enum: 'ADMIN', 'SUPERADMIN')",
+  "status": "string (enum: 'ACTIVE', 'DISABLED')",
+  "isDisabled": "boolean",
+  "orgId": "string (null for SUPERADMIN)"
 }
 ```
 
-### `Student User` (Stored in `hwa_students`)
+### `Student / Member User`
 
 ```json
 {
   "id": "string",
-  "orgId": "string (maps to hwa_organizations)",
+  "orgId": "string",
   "name": "string",
   "email": "string",
-  "status": "string (enum: 'Active', 'Disabled')"
+  "status": "string (enum: 'ACTIVE', 'DISABLED')",
+  "batchId": "string | null"
+}
+```
+
+---
+
+## 5. System Analytics (`/stats`)
+
+Available to `SUPERADMIN` only.
+
+| Endpoint | Method | Response       | Description                      |
+| -------- | ------ | -------------- | -------------------------------- |
+| `/stats` | `GET`  | `Stats Object` | Global platform metrics summary. |
+
+### `Stats` Object Schema
+
+```json
+{
+  "totalOrganizations": "number",
+  "activeOrganizations": "number",
+  "totalAdmins": "number",
+  "totalMembers": "number",
+  "totalPlatformUsers": "number"
 }
 ```
