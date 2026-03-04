@@ -1,7 +1,7 @@
 # HiredWithAndi Admin Panel
 
 ![Version](https://img.shields.io/badge/version-v0.5-blue)
-![CI/CD](https://github.com/alvianzf/hiredwithandi-admin/actions/workflows/ci-cd.yml/badge.svg)
+![CI/CD](https://github.com/alvianzf/hiredwithandi-admin/actions/workflows/ci-cd.yml/badge.svg?branch=main)
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
