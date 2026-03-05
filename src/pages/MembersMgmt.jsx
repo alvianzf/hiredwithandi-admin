@@ -6,6 +6,7 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import api from "../utils/api";
 import Swal from 'sweetalert2';
+import CustomSelect from "../components/CustomSelect";
 
 export default function MembersMgmt() {
   const { admin } = useAuth();
@@ -335,18 +336,15 @@ export default function MembersMgmt() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[var(--text-secondary)] whitespace-nowrap">Show:</span>
-          <select
-            value={limit}
-            onChange={(e) => {
-              setLimit(Number(e.target.value));
+          <CustomSelect
+            value={String(limit)}
+            onChange={(val) => {
+              setLimit(Number(val));
               setCurrentPage(1);
             }}
-            className="select-styled text-xs py-1 px-2"
-          >
-            {[10, 25, 50, 100].map(v => (
-              <option key={v} value={v}>{v}</option>
-            ))}
-          </select>
+            className="w-20 text-xs"
+            options={[10, 25, 50, 100].map(v => ({ value: String(v), label: String(v) }))}
+          />
         </div>
       </div>
       <div className="flex items-center space-x-2">
@@ -433,26 +431,26 @@ export default function MembersMgmt() {
           </div>
 
           <div className="flex flex-col md:flex-row gap-4">
-            <select
+            <CustomSelect
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="select-styled flex-1"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Disabled">Disabled</option>
-            </select>
+              onChange={setStatusFilter}
+              className="flex-1"
+              options={[
+                { value: "All", label: "All Statuses" },
+                { value: "Active", label: "Active" },
+                { value: "Disabled", label: "Disabled" },
+              ]}
+            />
 
-            <select
+            <CustomSelect
               value={batchFilter}
-              onChange={(e) => setBatchFilter(e.target.value)}
-              className="select-styled flex-1"
-            >
-              <option value="">All Batches</option>
-              {batches.map(b => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
+              onChange={setBatchFilter}
+              className="flex-1"
+              options={[
+                { value: "", label: "All Batches" },
+                ...batches.map(b => ({ value: b.id, label: b.name }))
+              ]}
+            />
           </div>
         </div>
 
@@ -576,16 +574,15 @@ export default function MembersMgmt() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Assign to Batch (Optional)</label>
-                <select
+                <CustomSelect
                   value={newMember.batchId}
-                  onChange={e => setNewMember({...newMember, batchId: e.target.value})}
-                  className="select-styled w-full"
-                >
-                  <option value="">None</option>
-                  {batches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setNewMember({...newMember, batchId: val})}
+                  className="w-full"
+                  options={[
+                    { value: "", label: "None" },
+                    ...batches.map(b => ({ value: b.id, label: b.name }))
+                  ]}
+                />
               </div>
 
               <div className="pt-4 flex justify-end space-x-3">
@@ -647,16 +644,15 @@ export default function MembersMgmt() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Assign to Batch</label>
-                <select
+                <CustomSelect
                   value={editMember.batchId || ""}
-                  onChange={e => setEditMember({...editMember, batchId: e.target.value})}
-                  className="select-styled w-full"
-                >
-                  <option value="">None</option>
-                  {batches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setEditMember({...editMember, batchId: val})}
+                  className="w-full"
+                  options={[
+                    { value: "", label: "None" },
+                    ...batches.map(b => ({ value: b.id, label: b.name }))
+                  ]}
+                />
               </div>
 
               <div className="pt-4 flex justify-end space-x-3">
@@ -730,16 +726,15 @@ export default function MembersMgmt() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">Assign to Batch (Optional)</label>
-                <select
+                <CustomSelect
                   value={csvBatchId}
-                  onChange={e => setCsvBatchId(e.target.value)}
-                  className="select-styled w-full"
-                >
-                  <option value="">None</option>
-                  {batches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
+                  onChange={setCsvBatchId}
+                  className="w-full"
+                  options={[
+                    { value: "", label: "None" },
+                    ...batches.map(b => ({ value: b.id, label: b.name }))
+                  ]}
+                />
               </div>
 
               <div className="flex justify-center items-center w-full">
