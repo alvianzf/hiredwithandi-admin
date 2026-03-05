@@ -4,6 +4,7 @@ import { FiX, FiCheck, FiSearch, FiUserPlus, FiShield, FiKey } from "react-icons
 import { toast } from "sonner";
 import api from "../utils/api";
 import Swal from 'sweetalert2';
+import CustomSelect from "../components/CustomSelect";
 
 export default function PlatformUsers() {
   const [users, setUsers] = useState([]);
@@ -188,20 +189,17 @@ export default function PlatformUsers() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[var(--text-secondary)] whitespace-nowrap">Show:</span>
-          <select
-            value={limit}
-            onChange={(e) => {
-              const newLimit = Number(e.target.value);
+          <CustomSelect
+            value={String(limit)}
+            onChange={(val) => {
+              const newLimit = Number(val);
               setLimit(newLimit);
               setCurrentPage(1);
-              loadData(1); // Explicitly call with page 1
+              loadData(1);
             }}
-            className="select-styled text-xs py-1 px-2"
-          >
-            {[10, 25, 50, 100].map(v => (
-              <option key={v} value={v}>{v}</option>
-            ))}
-          </select>
+            className="w-20 text-xs"
+            options={[10, 25, 50, 100].map(v => ({ value: String(v), label: String(v) }))}
+          />
         </div>
       </div>
       <div className="flex items-center space-x-2">
@@ -272,50 +270,50 @@ export default function PlatformUsers() {
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <select
+            <CustomSelect
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="select-styled w-full"
-            >
-              <option value="All">All Roles</option>
-              <option value="Member">Member</option>
-              <option value="Org Admin">Org Admin</option>
-              <option value="Superadmin">Superadmin</option>
-            </select>
+              onChange={setRoleFilter}
+              className="w-full"
+              options={[
+                { value: "All", label: "All Roles" },
+                { value: "Member", label: "Member" },
+                { value: "Org Admin", label: "Org Admin" },
+                { value: "Superadmin", label: "Superadmin" },
+              ]}
+            />
 
-            <select
+            <CustomSelect
               value={orgFilter}
-              onChange={(e) => setOrgFilter(e.target.value)}
-              className="select-styled w-full"
-            >
-              <option value="All">All Organizations</option>
-              <option value="sys">System (Global)</option>
-              {organizations.map(o => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
+              onChange={setOrgFilter}
+              className="w-full"
+              options={[
+                { value: "All", label: "All Organizations" },
+                { value: "sys", label: "System (Global)" },
+                ...organizations.map(o => ({ value: o.id, label: o.name }))
+              ]}
+            />
 
-            <select
+            <CustomSelect
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="select-styled w-full"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Disabled">Disabled</option>
-            </select>
+              onChange={setStatusFilter}
+              className="w-full"
+              options={[
+                { value: "All", label: "All Statuses" },
+                { value: "Active", label: "Active" },
+                { value: "Disabled", label: "Disabled" },
+              ]}
+            />
 
-            <select
+            <CustomSelect
               value={batchFilter}
-              onChange={(e) => setBatchFilter(e.target.value)}
+              onChange={setBatchFilter}
               disabled={orgFilter === "All" || orgFilter === "sys"}
-              className="select-styled w-full disabled:opacity-50"
-            >
-              <option value="All">All Batches</option>
-              {batches.map(b => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
+              className="w-full"
+              options={[
+                { value: "All", label: "All Batches" },
+                ...batches.map(b => ({ value: b.id, label: b.name }))
+              ]}
+            />
           </div>
         </div>
         
@@ -384,22 +382,22 @@ export default function PlatformUsers() {
                       <td className="p-4 flex justify-center space-x-3 items-center">
                         <button
                           onClick={() => openEditModal(user)}
-                          className="text-yellow-600 dark:text-yellow-500 hover:text-yellow-700 font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg"
-                          title="Edit User"
+                          className="cursor-pointer text-yellow-600 dark:text-yellow-500 hover:text-yellow-700 font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg"
+                          title="Edit user details"
                         >
                           Edit
                         </button>
                           <button
                             onClick={() => handleResetPassword(user)}
-                            className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
-                            title="Reset Password"
+                            className="cursor-pointer bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
+                            title="Reset user's password"
                           >
                             <FiKey size={14} /> Reset
                           </button>
                         <button
                           onClick={() => toggleUserStatus(user)}
-                          className={`${currentStatus === 'ACTIVE' ? 'text-red-600 dark:text-red-500 hover:text-red-700' : 'text-green-600 dark:text-green-500 hover:text-green-700'} font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg`}
-                          title={currentStatus === 'ACTIVE' ? 'Disable User' : 'Enable User'}
+                          className={`cursor-pointer ${currentStatus === 'ACTIVE' ? 'text-red-600 dark:text-red-500 hover:text-red-700' : 'text-green-600 dark:text-green-500 hover:text-green-700'} font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg`}
+                          title={currentStatus === 'ACTIVE' ? 'Disable this user' : 'Enable this user'}
                         >
                           {currentStatus === 'ACTIVE' ? 'Disable' : 'Enable'}
                         </button>
@@ -431,30 +429,29 @@ export default function PlatformUsers() {
             <form onSubmit={handleCreateUser} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Administrative Role</label>
-                <select 
+                <CustomSelect
                   value={newUser.role}
-                  onChange={e => setNewUser({...newUser, role: e.target.value})}
-                  className="select-styled w-full"
-                >
-                  <option value="Org Admin">Organizational Admin</option>
-                  <option value="Superadmin">Global Superadmin</option>
-                </select>
+                  onChange={(val) => setNewUser({...newUser, role: val})}
+                  className="w-full"
+                  options={[
+                    { value: "Org Admin", label: "Organizational Admin" },
+                    { value: "Superadmin", label: "Global Superadmin" },
+                  ]}
+                />
               </div>
 
               {newUser.role === "Org Admin" && (
                 <div className="animate-in fade-in slide-in-from-top-2">
                   <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Assign to Organization</label>
-                  <select 
-                    required
+                  <CustomSelect
                     value={newUser.orgId}
-                    onChange={e => setNewUser({...newUser, orgId: e.target.value})}
-                    className="select-styled w-full"
-                  >
-                    <option value="" disabled>Select an Organization</option>
-                    {organizations.map(o => (
-                      <option key={o.id} value={o.id}>{o.name}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setNewUser({...newUser, orgId: val})}
+                    className="w-full"
+                    options={[
+                      { value: "", label: "Select an Organization" },
+                      ...organizations.map(o => ({ value: o.id, label: o.name }))
+                    ]}
+                  />
                 </div>
               )}
 
