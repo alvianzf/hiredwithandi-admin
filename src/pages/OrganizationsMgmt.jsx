@@ -700,21 +700,23 @@ export default function OrganizationsMgmt() {
               <div className="pt-4 border-t border-[var(--border-color)]">
                 <label className="block text-xs font-bold text-red-500 mb-2 uppercase tracking-wide">Danger Zone</label>
                 <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleOrgStatus()}
-                    className="flex-1 py-2 rounded-xl text-sm font-bold border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
-                    data-tooltip={selectedOrg.status === 'ACTIVE' ? 'Disable org &amp; members' : 'Re-enable org'}
-                  >
-                    {selectedOrg.status === 'ACTIVE' ? 'Disable' : 'Enable'}
-                  </button>
-                  <button 
-                    onClick={handleDeleteOrg}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-                    data-tooltip="Permanently delete — cannot be undone"
-                  >
-                    <FiTrash2 size={18} /> Delete
-                  </button>
+                  <Tooltip text={selectedOrg.status === 'ACTIVE' ? 'Disable org & members' : 'Re-enable org'}>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleOrgStatus()}
+                      className="flex-1 py-2 rounded-xl text-sm font-bold border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                    >
+                      {selectedOrg.status === 'ACTIVE' ? 'Disable' : 'Enable'}
+                    </button>
+                  </Tooltip>
+                  <Tooltip text="Permanently delete — cannot be undone">
+                    <button 
+                      onClick={handleDeleteOrg}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <FiTrash2 size={18} /> Delete
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
 
