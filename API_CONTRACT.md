@@ -14,7 +14,7 @@ The primary state for job applications is stored as a serialized JSON object con
   "url": "string (optional job posting URL)",
   "salary": "string (optional monthly salary range)",
   "notes": "string (optional)",
-  "workType": "string (enum: 'remote', 'onsite', 'hybrid')",
+  "workType": "string (enum: 'Remote', 'On-site', 'Hybrid')",
   "location": "string (optional)",
   "finalOffer": "string (optional, populated when in 'offered' status)",
   "benefits": "string (optional, populated when in 'offered' status)",
