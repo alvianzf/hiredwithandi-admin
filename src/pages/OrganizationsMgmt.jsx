@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FiPlus, FiBriefcase, FiUsers, FiSettings, FiCheck, FiX, FiAlertCircle } from "react-icons/fi";
+import { FiPlus, FiBriefcase, FiUsers, FiSettings, FiCheck, FiX, FiAlertCircle, FiEdit, FiTrash2, FiKey } from "react-icons/fi";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import api from "../utils/api";
@@ -101,6 +101,58 @@ export default function OrganizationsMgmt() {
     }
   };
 
+  const handleEditBatchName = async (batch) => {
+    const { value: newName } = await Swal.fire({
+      title: 'Rename Batch',
+      input: 'text',
+      inputLabel: 'New Batch Name',
+      inputValue: batch.name,
+      showCancelButton: true,
+      confirmButtonColor: '#ffb800',
+      cancelButtonColor: '#6B7280',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Batch name cannot be empty!'
+        }
+      }
+    });
+
+    if (newName && newName !== batch.name) {
+      try {
+        await api.patch(`/batches/${batch.id}`, { name: newName });
+        toast.success("Batch renamed successfully");
+        if (selectedOrg) loadBatches(selectedOrg.id);
+      } catch (error) {
+        toast.error(error.response?.data?.error?.message || "Failed to rename batch");
+      }
+    }
+  };
+
+  const toggleBatchStatus = async (batch) => {
+    const newStatus = batch.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+    const action = batch.status === 'ACTIVE' ? 'disable' : 'enable';
+
+    const result = await Swal.fire({
+      title: `Are you sure?`,
+      text: `Do you want to ${action} batch "${batch.name}"? This will also ${action} all member accounts in this batch.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ffb800',
+      cancelButtonColor: '#ea4335',
+      confirmButtonText: `Yes, ${action} it!`
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.patch(`/batches/${batch.id}`, { status: newStatus });
+        toast.success(`Batch ${action}d successfully`);
+        if (selectedOrg) loadBatches(selectedOrg.id);
+      } catch {
+        toast.error(`Failed to ${action} batch`);
+      }
+    }
+  };
+
   const handleDeleteBatch = async (batchId, batchName) => {
     const result = await Swal.fire({
       title: 'Delete Batch?',
@@ -186,6 +238,27 @@ export default function OrganizationsMgmt() {
       loadData();
     } catch {
       toast.error("Failed to remove admin");
+    }
+  };
+
+  const handleResetPassword = async (admin) => {
+    const result = await Swal.fire({
+      title: `Reset Password?`,
+      text: `This will clear ${admin.name}'s password and force them to set up a new one on their next login. Are you sure?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ea4335',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: `Yes, reset it!`
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.post(`/users/${admin.id}/reset-password`);
+        toast.success(`Password reset for ${admin.name}`);
+      } catch {
+        toast.error(`Failed to reset password`);
+      }
     }
   };
 
@@ -501,14 +574,24 @@ export default function OrganizationsMgmt() {
                         <p className="font-medium text-[var(--text-primary)] text-sm">{admin.name}</p>
                         <p className="text-xs text-[var(--text-secondary)]">{admin.email}</p>
                       </div>
-                      <button 
-                        type="button"
-                        onClick={() => removeAdmin(admin.id)}
-                        className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
-                        title="Remove Admin"
-                      >
-                        <FiX size={16} />
-                      </button>
+                      <div className="flex gap-1">
+                        <button 
+                          type="button"
+                          onClick={() => handleResetPassword(admin)}
+                          className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
+                          title="Reset Password"
+                        >
+                          <FiKey size={16} />
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => removeAdmin(admin.id)}
+                          className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
+                          title="Disable Admin"
+                        >
+                          <FiX size={16} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -539,19 +622,47 @@ export default function OrganizationsMgmt() {
                     <p className="text-sm text-[var(--text-secondary)] italic">No batches configured</p>
                   ) : (
                     batches.map(batch => (
-                      <div key={batch.id} className="flex justify-between items-center bg-black/5 dark:bg-white/5 p-2 rounded-lg border border-[var(--border-color)]">
-                        <div>
-                          <p className="font-medium text-[var(--text-primary)] text-sm">{batch.name}</p>
-                          <p className="text-xs text-[var(--text-secondary)]">{batch._count?.users || 0} members</p>
+                      <div key={batch.id} className={`flex justify-between items-center bg-black/5 dark:bg-white/5 p-2 rounded-lg border border-[var(--border-color)] ${batch.status === 'DISABLED' ? 'opacity-60' : ''}`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-black text-xs ${batch.status === 'DISABLED' ? 'bg-orange-500' : 'bg-[var(--color-primary-yellow)]'}`}>
+                            {batch.name.charAt(0)}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-[var(--text-primary)] flex items-center gap-2">
+                            {batch.name}
+                            {batch.status === 'DISABLED' && <span className="text-[10px] bg-orange-500/20 text-orange-500 px-1.5 py-0.5 rounded uppercase font-black">Disabled</span>}
+                          </h4>
+                          <p className="text-xs text-[var(--text-secondary)] font-medium">
+                            {batch._count?.users || 0} members
+                          </p>
+                          </div>
                         </div>
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteBatch(batch.id, batch.name)}
-                          className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
-                          title="Delete Batch"
-                        >
-                          <FiX size={16} />
-                        </button>
+                        <div className="flex gap-1">
+                          <button 
+                            type="button"
+                            onClick={() => handleEditBatchName(batch)}
+                            className="text-blue-500 hover:bg-blue-500/10 p-1.5 rounded-lg transition-colors"
+                            title="Rename Batch"
+                          >
+                            <FiEdit size={14} />
+                          </button>
+                            <button 
+                              type="button"
+                              onClick={() => toggleBatchStatus(batch)}
+                              className={`p-2 rounded-lg transition-colors ${batch.status === 'ACTIVE' ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
+                              title={batch.status === 'ACTIVE' ? 'Disable Batch' : 'Enable Batch'}
+                            >
+                              {batch.status === 'ACTIVE' ? <FiX size={16} /> : <FiCheck size={16} />}
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => handleDeleteBatch(batch.id, batch.name)}
+                              className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                              title="Delete Batch Permanently"
+                            >
+                              <FiTrash2 size={16} />
+                            </button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -563,7 +674,7 @@ export default function OrganizationsMgmt() {
                     type="text"
                     value={newBatchName}
                     onChange={(e) => setNewBatchName(e.target.value)}
-                    className="select-styled flex-1"
+                    className="flex-1 px-4 py-2 text-sm rounded-xl border border-[var(--border-color)] bg-black/5 dark:bg-white/5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--color-primary-yellow)] focus:border-transparent transition-all"
                     placeholder="e.g. Fall 2024"
                   />
                   <button
@@ -587,12 +698,12 @@ export default function OrganizationsMgmt() {
                   >
                     {selectedOrg.status === 'ACTIVE' ? 'Disable Organization' : 'Enable Organization'}
                   </button>
-                  <button
-                    type="button"
+                  <button 
                     onClick={handleDeleteOrg}
-                    className="flex-1 py-2 rounded-xl text-sm font-bold bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2"
+                    title="Delete Organization Permanently"
                   >
-                    Delete Permanently
+                    <FiTrash2 size={18} /> Delete Permanently
                   </button>
                 </div>
               </div>
