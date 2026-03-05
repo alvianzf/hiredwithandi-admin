@@ -38,6 +38,14 @@
     @apply bg-[var(--bg-color)] text-[var(--text-primary)] transition-colors duration-300 antialiased font-sans;
   }
 
+  button, [role="button"] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
   ::selection {
     background-color: var(--selection-bg);
     color: inherit;
@@ -71,11 +79,6 @@
     background-position: right 1rem center;
     background-size: 1.25rem;
     padding-right: 2.5rem;
-  }
-
-  .select-styled option {
-    background-color: var(--bg-color);
-    color: var(--text-primary);
   }
 
   .bg-doodle {
