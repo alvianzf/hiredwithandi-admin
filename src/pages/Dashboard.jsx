@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
+import CustomSelect from "../components/CustomSelect";
 
 export default function Dashboard() {
   const { admin } = useAuth();
@@ -66,16 +67,15 @@ export default function Dashboard() {
         
         <div className="flex items-center gap-3">
           <label className="text-sm font-bold text-[var(--text-secondary)] uppercase">Filter</label>
-          <select
+          <CustomSelect
             value={selectedBatchId}
-            onChange={(e) => setSelectedBatchId(e.target.value)}
-            className="select-styled min-w-[150px]"
-          >
-            <option value="">All Batches</option>
-            {batches.map(b => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedBatchId(val)}
+            className="min-w-[160px]"
+            options={[
+              { value: "", label: "All Batches" },
+              ...batches.map(b => ({ value: b.id, label: b.name }))
+            ]}
+          />
         </div>
       </div>
 
