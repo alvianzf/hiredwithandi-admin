@@ -212,21 +212,25 @@ export default function MembersMgmt() {
   };
 
   const handleEditBatchName = async (batch) => {
+    const root = document.documentElement;
+    const bg = getComputedStyle(root).getPropertyValue('--bg-color').trim() || '#111111';
+    const textPrimary = getComputedStyle(root).getPropertyValue('--text-primary').trim() || '#f9fafb';
+
     const { value: newName } = await Swal.fire({
       title: 'Rename Batch',
       input: 'text',
       inputLabel: 'New Batch Name',
       inputValue: batch.name,
       showCancelButton: true,
-      confirmButtonColor: 'var(--primary)',
-      cancelButtonColor: 'transparent',
-      background: 'var(--bg-secondary)',
-      color: 'var(--text-primary)',
+      confirmButtonColor: '#ffb800',
+      cancelButtonColor: 'rgba(255,255,255,0.08)',
+      background: bg,
+      color: textPrimary,
       customClass: {
-        popup: 'rounded-3xl border border-[var(--border-color)] shadow-2xl',
-        input: 'rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]',
-        cancelButton: 'border border-[var(--border-color)] text-[var(--text-secondary)] rounded-xl',
-        confirmButton: 'rounded-xl font-bold',
+        popup: 'rounded-3xl shadow-2xl',
+        input: '!rounded-xl !border !bg-transparent !text-inherit !px-4 !py-2',
+        confirmButton: '!rounded-xl !font-bold',
+        cancelButton: '!rounded-xl',
       },
       inputValidator: (value) => {
         if (!value) return 'Batch name cannot be empty!'
