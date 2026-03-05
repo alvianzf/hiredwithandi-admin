@@ -33,6 +33,10 @@ export default function MembersMgmt() {
   const [csvBatchId, setCsvBatchId] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState("");
+  const [csvParsedData, setCsvParsedData] = useState(null); // parsed rows, null = no file yet
+  const [csvFileName, setCsvFileName] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isBatchesModalOpen, setIsBatchesModalOpen] = useState(false);
   const [newBatchName, setNewBatchName] = useState("");
@@ -275,66 +279,85 @@ export default function MembersMgmt() {
     }
   };
 
-  const handleCsvUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
+  const resetCsvState = () => {
     setUploadError("");
     setUploadSuccess("");
+    setCsvParsedData(null);
+    setCsvFileName("");
+    setIsDragging(false);
+    setIsSubmitting(false);
+  };
+
+  const parseFile = (file) => {
+    if (!file || !file.name.endsWith('.csv')) {
+      setUploadError("Please upload a valid .csv file.");
+      return;
+    }
+    setUploadError("");
+    setUploadSuccess("");
+    setCsvFileName(file.name);
 
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: async (results) => {
+      complete: (results) => {
         const { data } = results;
         if (!data || data.length === 0) {
           setUploadError("CSV is empty or format is invalid. Make sure it has 'name' and 'email' headers.");
+          setCsvParsedData(null);
           return;
         }
-
-        const newEntries = data.map((row, index) => {
+        const rows = data.map((row, index) => {
           const email = row.email || row.Email;
           const name = row.name || row.Name || email?.split('@')[0] || "Unknown User";
           if (!email) return null;
-
-          return {
-            id: `stu_${Date.now()}_${index}`,
-            orgId: admin.orgId,
-            name,
-            email,
-            batchId: csvBatchId || undefined,
-            status: 'Active'
-          };
+          return { id: `stu_${Date.now()}_${index}`, orgId: admin.orgId, name, email, status: 'Active' };
         }).filter(Boolean);
 
-        if (newEntries.length === 0) {
+        if (rows.length === 0) {
           setUploadError("Could not find a valid 'email' column. Please check your CSV structure.");
+          setCsvParsedData(null);
           return;
         }
-
-        try {
-          await api.post('/batch-members', {
-            orgId: admin.orgId,
-            members: newEntries
-          });
-          
-          loadMembers();
-          setUploadSuccess(`Successfully imported ${newEntries.length} members!`);
-          setTimeout(() => {
-            setIsCsvModalOpen(false);
-            setUploadSuccess("");
-          }, 2000);
-        } catch (error) {
-          setUploadError(error.response?.data?.error?.message || "Failed to batch upload members");
-        }
+        setCsvParsedData(rows);
       },
-      error: (err) => {
-        setUploadError(err.message);
-      }
+      error: (err) => setUploadError(err.message),
     });
-
-    e.target.value = null; // reset file input so the same file can be chosen again
   };
+
+  const handleCsvUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) parseFile(file);
+    e.target.value = null;
+  };
+
+  const handleCsvDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) parseFile(file);
+  };
+
+  const handleCsvSubmit = async () => {
+    if (!csvParsedData || csvParsedData.length === 0) return;
+    setIsSubmitting(true);
+    const members = csvParsedData.map(m => ({ ...m, batchId: csvBatchId || undefined }));
+    try {
+      await api.post('/batch-members', { orgId: admin.orgId, members });
+      loadMembers();
+      setUploadSuccess(`Successfully imported ${members.length} members!`);
+      setTimeout(() => {
+        setIsCsvModalOpen(false);
+        resetCsvState();
+      }, 2000);
+    } catch (error) {
+      setUploadError(error.response?.data?.error?.message || "Failed to batch upload members");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
 
   const totalPages = Math.ceil(totalMembers / limit);
@@ -691,36 +714,36 @@ export default function MembersMgmt() {
 
       {/* 3. CSV Upload Modal */}
       {isCsvModalOpen && (
-        <div onClick={() => { setIsCsvModalOpen(false); setUploadError(""); setUploadSuccess(""); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div onClick={() => { setIsCsvModalOpen(false); resetCsvState(); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
               <h3 className="text-xl font-bold">Batch Upload Members</h3>
               <button 
-                onClick={() => {
-                  setIsCsvModalOpen(false);
-                  setUploadError("");
-                  setUploadSuccess("");
-                }} 
+                onClick={() => { setIsCsvModalOpen(false); resetCsvState(); }} 
                 className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 <FiX size={24} />
               </button>
             </div>
             
-            <div className="p-6 space-y-6">
-              
-              <div className="bg-black/5 dark:bg-black/20 p-4 rounded-lg border border-[var(--border-color)]">
-                <h4 className="font-semibold mb-2">CSV Structure Required:</h4>
-                <p className="text-sm text-[var(--text-secondary)] mb-3">
-                  Your CSV must contain a header row. The bare minimum required column is <strong>email</strong>. An optional <strong>name</strong> column is supported.
-                </p>
-                <div className="bg-[var(--bg-color)] p-3 rounded font-mono text-xs overflow-x-auto shadow-inner border border-[var(--border-color)]">
-                  name,email<br/>
-                  John Doe,john.doe@example.com<br/>
-                  Jane Smith,jane@example.com
-                </div>
-              </div>
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
 
+              {/* Format guide — only shown before file selected */}
+              {!csvParsedData && (
+                <div className="bg-black/5 dark:bg-black/20 p-4 rounded-lg border border-[var(--border-color)]">
+                  <h4 className="font-semibold mb-2">CSV Structure Required:</h4>
+                  <p className="text-sm text-[var(--text-secondary)] mb-3">
+                    The bare minimum required column is <strong>email</strong>. An optional <strong>name</strong> column is supported.
+                  </p>
+                  <div className="bg-[var(--bg-color)] p-3 rounded font-mono text-xs overflow-x-auto shadow-inner border border-[var(--border-color)]">
+                    name,email<br/>
+                    John Doe,john.doe@example.com<br/>
+                    Jane Smith,jane@example.com
+                  </div>
+                </div>
+              )}
+
+              {/* Error */}
               {uploadError && (
                 <div className="p-3 bg-red-500/20 border border-red-500/50 text-red-500 text-sm rounded-lg flex items-start space-x-2">
                   <FiX className="mt-0.5 flex-shrink-0" />
@@ -728,6 +751,7 @@ export default function MembersMgmt() {
                 </div>
               )}
 
+              {/* Success */}
               {uploadSuccess && (
                 <div className="p-3 bg-green-500/20 border border-green-500/50 text-green-500 text-sm rounded-lg flex items-start space-x-2">
                   <FiCheck className="mt-0.5 flex-shrink-0" />
@@ -735,6 +759,7 @@ export default function MembersMgmt() {
                 </div>
               )}
 
+              {/* Batch selector — always visible */}
               <div>
                 <label className="block text-sm font-medium mb-1">Assign to Batch (Optional)</label>
                 <CustomSelect
@@ -748,16 +773,74 @@ export default function MembersMgmt() {
                 />
               </div>
 
-              <div className="flex justify-center items-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-[var(--border-color)] border-dashed rounded-lg cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <FiUploadCloud className="w-10 h-10 text-[var(--text-secondary)] mb-3" />
-                    <p className="mb-2 text-sm text-[var(--text-secondary)]"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                    <p className="text-xs text-[var(--text-secondary)] opacity-70">CSV files only</p>
+              {/* Drop zone — hidden once file is parsed */}
+              {!csvParsedData && (
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleCsvDrop}
+                  className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-lg transition-colors ${
+                    isDragging
+                      ? 'border-yellow-400/60 bg-yellow-400/5'
+                      : 'border-[var(--border-color)] hover:bg-black/5 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <FiUploadCloud className="w-9 h-9 text-[var(--text-secondary)] mb-2" />
+                  <p className="mb-1 text-sm text-[var(--text-secondary)]">
+                    <span className="font-semibold">Drag & drop</span> or{' '}
+                    <label className="text-yellow-500 underline cursor-pointer">
+                      browse
+                      <input type="file" accept=".csv" className="hidden" onChange={handleCsvUpload} />
+                    </label>
+                  </p>
+                  <p className="text-xs text-[var(--text-secondary)] opacity-70">CSV files only</p>
+                </div>
+              )}
+
+              {/* Preview — shown once file is parsed */}
+              {csvParsedData && (
+                <div className="space-y-3">
+                  {/* File info row */}
+                  <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-lg px-4 py-2.5">
+                    <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 font-medium">
+                      <FiCheck size={15} />
+                      <span className="truncate max-w-[220px]">{csvFileName}</span>
+                      <span className="text-[var(--text-secondary)] font-normal">— {csvParsedData.length} member{csvParsedData.length !== 1 ? 's' : ''} detected</span>
+                    </div>
+                    <button
+                      onClick={resetCsvState}
+                      className="text-xs text-[var(--text-secondary)] hover:text-red-500 transition-colors underline ml-2 flex-shrink-0"
+                    >
+                      Change file
+                    </button>
                   </div>
-                  <input type="file" accept=".csv" className="hidden" onChange={handleCsvUpload} />
-                </label>
-              </div>
+
+                  {/* Member list preview */}
+                  <div className="rounded-lg border border-[var(--border-color)] overflow-hidden">
+                    <div className="grid grid-cols-2 gap-0 bg-black/10 dark:bg-white/5 px-4 py-2 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wide">
+                      <span>Name</span>
+                      <span>Email</span>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto divide-y divide-[var(--border-color)]">
+                      {csvParsedData.map((m, i) => (
+                        <div key={i} className="grid grid-cols-2 gap-0 px-4 py-2 text-sm">
+                          <span className="text-[var(--text-primary)] truncate pr-2">{m.name}</span>
+                          <span className="text-[var(--text-secondary)] truncate">{m.email}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    onClick={handleCsvSubmit}
+                    disabled={isSubmitting}
+                    className="w-full py-3 rounded-xl font-bold text-sm transition-all bg-yellow-400 text-black hover:bg-yellow-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? 'Importing...' : `Import ${csvParsedData.length} Members`}
+                  </button>
+                </div>
+              )}
 
             </div>
           </div>
