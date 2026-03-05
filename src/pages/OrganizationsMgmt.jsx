@@ -700,7 +700,7 @@ export default function OrganizationsMgmt() {
               <div className="pt-4 border-t border-[var(--border-color)]">
                 <label className="block text-xs font-bold text-red-500 mb-2 uppercase tracking-wide">Danger Zone</label>
                 <div className="flex gap-3">
-                  <Tooltip text={selectedOrg.status === 'ACTIVE' ? 'Disable org & members' : 'Re-enable org'}>
+                  <Tooltip text={selectedOrg.status === 'ACTIVE' ? 'Disable org & members' : 'Re-enable org'} className="flex-1">
                     <button
                       type="button"
                       onClick={() => handleToggleOrgStatus()}
@@ -709,7 +709,7 @@ export default function OrganizationsMgmt() {
                       {selectedOrg.status === 'ACTIVE' ? 'Disable' : 'Enable'}
                     </button>
                   </Tooltip>
-                  <Tooltip text="Permanently delete — cannot be undone">
+                  <Tooltip text="Permanently delete — cannot be undone" className="flex-1">
                     <button 
                       onClick={handleDeleteOrg}
                       className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"

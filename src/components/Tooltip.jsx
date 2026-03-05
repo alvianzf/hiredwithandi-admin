@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
  *   position  — 'top' (default) | 'bottom'
  *   children  — the trigger element
  */
-export default function Tooltip({ text, children, position = "top" }) {
+export default function Tooltip({ text, children, position = "top", className = "" }) {
   const [rect, setRect] = useState(null);
   const ref = useRef(null);
 
@@ -42,7 +42,7 @@ export default function Tooltip({ text, children, position = "top" }) {
     : {};
 
   return (
-    <span ref={ref} onMouseEnter={show} onMouseLeave={hide} className="inline-flex">
+    <span ref={ref} onMouseEnter={show} onMouseLeave={hide} className={`inline-flex ${className}`}>
       {children}
       {rect && createPortal(
         <div style={tooltipStyle}>{text}</div>,
