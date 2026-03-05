@@ -78,6 +78,18 @@
     transform: translateX(-50%) translateY(0);
   }
 
+  /* Flip tooltip below the element (for buttons inside overflow containers) */
+  [data-tooltip].tooltip-down::before {
+    bottom: auto;
+    top: calc(100% + 8px);
+    transform: translateX(-50%) translateY(-4px);
+  }
+
+  [data-tooltip].tooltip-down:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
   ::selection {
     background-color: var(--selection-bg);
     color: inherit;

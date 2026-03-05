@@ -817,21 +817,21 @@ export default function MembersMgmt() {
                           <>
                             <button 
                               onClick={() => handleEditBatchName(batch)}
-                              className="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
+                              className="tooltip-down p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
                               data-tooltip="Rename batch"
                             >
                               <FiEdit size={16} />
                             </button>
                             <button 
                               onClick={() => toggleBatchStatus(batch)}
-                              className={`p-2 rounded-lg transition-colors ${batch.status === 'ACTIVE' ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
+                              className={`tooltip-down p-2 rounded-lg transition-colors ${batch.status === 'ACTIVE' ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
                               data-tooltip={batch.status === 'ACTIVE' ? 'Disable batch' : 'Enable batch'}
                             >
                               {batch.status === 'ACTIVE' ? <FiX size={16} /> : <FiCheck size={16} />}
                             </button>
                             <button 
                               onClick={() => handleDeleteBatch(batch.id, batch.name)}
-                              className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                              className="tooltip-down p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
                               data-tooltip="Delete batch permanently"
                             >
                               <FiTrash2 size={16} />
