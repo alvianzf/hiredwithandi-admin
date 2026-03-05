@@ -4,6 +4,7 @@ import { FiPlus, FiBriefcase, FiUsers, FiSettings, FiCheck, FiX, FiAlertCircle, 
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import api from "../utils/api";
+import Tooltip from "../components/Tooltip";
 
 export default function OrganizationsMgmt() {
   const [organizations, setOrganizations] = useState([]);
@@ -578,22 +579,24 @@ export default function OrganizationsMgmt() {
                         <p className="text-xs text-[var(--text-secondary)]">{admin.email}</p>
                       </div>
                       <div className="flex gap-1">
-                        <button 
-                          type="button"
-                          onClick={() => handleResetPassword(admin)}
-                          className="tooltip-down text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
-                          data-tooltip="Reset password"
-                        >
-                          <FiKey size={16} />
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={() => removeAdmin(admin.id)}
-                          className="tooltip-down text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
-                          data-tooltip="Remove admin access"
-                        >
-                          <FiX size={16} />
-                        </button>
+                        <Tooltip text="Reset password" position="bottom">
+                          <button 
+                            type="button"
+                            onClick={() => handleResetPassword(admin)}
+                            className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
+                          >
+                            <FiKey size={16} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Remove admin access" position="bottom">
+                          <button 
+                            type="button"
+                            onClick={() => removeAdmin(admin.id)}
+                            className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
+                          >
+                            <FiX size={16} />
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
                   ))}
@@ -641,30 +644,33 @@ export default function OrganizationsMgmt() {
                           </div>
                         </div>
                         <div className="flex gap-1">
-                          <button 
-                            type="button"
-                            onClick={() => handleEditBatchName(batch)}
-                            className="tooltip-down text-blue-500 hover:bg-blue-500/10 p-1.5 rounded-lg transition-colors"
-                            data-tooltip="Rename batch"
-                          >
-                            <FiEdit size={14} />
-                          </button>
+                          <Tooltip text="Rename batch" position="bottom">
+                            <button 
+                              type="button"
+                              onClick={() => handleEditBatchName(batch)}
+                              className="text-blue-500 hover:bg-blue-500/10 p-1.5 rounded-lg transition-colors"
+                            >
+                              <FiEdit size={14} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip text={batch.status === 'ACTIVE' ? 'Disable batch' : 'Enable batch'} position="bottom">
                             <button 
                               type="button"
                               onClick={() => toggleBatchStatus(batch)}
-                              className={`tooltip-down p-2 rounded-lg transition-colors ${batch.status === 'ACTIVE' ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
-                              data-tooltip={batch.status === 'ACTIVE' ? 'Disable batch' : 'Enable batch'}
+                              className={`p-2 rounded-lg transition-colors ${batch.status === 'ACTIVE' ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
                             >
                               {batch.status === 'ACTIVE' ? <FiX size={16} /> : <FiCheck size={16} />}
                             </button>
+                          </Tooltip>
+                          <Tooltip text="Delete batch" position="bottom">
                             <button 
                               type="button"
                               onClick={() => handleDeleteBatch(batch.id, batch.name)}
-                              className="tooltip-down p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-                              data-tooltip="Delete batch permanently"
+                              className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
                             >
                               <FiTrash2 size={16} />
                             </button>
+                          </Tooltip>
                         </div>
                       </div>
                     ))
