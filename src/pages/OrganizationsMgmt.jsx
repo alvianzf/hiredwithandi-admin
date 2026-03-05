@@ -8,7 +8,6 @@ import Tooltip from "../components/Tooltip";
 
 export default function OrganizationsMgmt() {
   const [organizations, setOrganizations] = useState([]);
-  const [admins, setAdmins] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState(null);
@@ -35,12 +34,8 @@ export default function OrganizationsMgmt() {
 
   const loadData = async () => {
     try {
-      const [orgRes, usersRes] = await Promise.all([
-        api.get("/organizations"),
-        api.get("/users")
-      ]);
+      const orgRes = await api.get("/organizations");
       setOrganizations(orgRes.data.data);
-      setAdmins(usersRes.data.data.filter(u => u.role === "ADMIN"));
     } catch {
       toast.error("Failed to load organizations");
     }
@@ -71,7 +66,8 @@ export default function OrganizationsMgmt() {
   };
 
   const getAdminsForOrg = (orgId) => {
-    return admins.filter(a => a.orgId === orgId);
+    const org = organizations.find(o => o.id === orgId);
+    return org?.users || [];
   };
 
   const openManageModal = async (org) => {
