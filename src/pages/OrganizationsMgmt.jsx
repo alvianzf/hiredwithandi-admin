@@ -417,6 +417,7 @@ export default function OrganizationsMgmt() {
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
+                title="Close"
               >
                 <FiX size={20} />
               </button>
@@ -493,6 +494,7 @@ export default function OrganizationsMgmt() {
               <button 
                 onClick={() => { setIsEditAdminModalOpen(false); setEditingAdmin(null); }}
                 className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
+                title="Close"
               >
                 <FiX size={20} />
               </button>
@@ -547,6 +549,7 @@ export default function OrganizationsMgmt() {
               <button 
                 onClick={() => setIsManageModalOpen(false)}
                 className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
+                title="Close"
               >
                 <FiX size={20} />
               </button>
@@ -694,16 +697,17 @@ export default function OrganizationsMgmt() {
                   <button
                     type="button"
                     onClick={() => handleToggleOrgStatus()}
-                    className="flex-1 py-2 rounded-xl text-sm font-bold border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors"
+                    className="flex-1 py-2 rounded-xl text-sm font-bold border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                    title={selectedOrg.status === 'ACTIVE' ? 'Disable this organization and all its members' : 'Re-enable this organization'}
                   >
-                    {selectedOrg.status === 'ACTIVE' ? 'Disable Organization' : 'Enable Organization'}
+                    {selectedOrg.status === 'ACTIVE' ? 'Disable' : 'Enable'}
                   </button>
                   <button 
                     onClick={handleDeleteOrg}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2"
-                    title="Delete Organization Permanently"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                    title="Permanently delete this organization — cannot be undone"
                   >
-                    <FiTrash2 size={18} /> Delete Permanently
+                    <FiTrash2 size={18} /> Delete
                   </button>
                 </div>
               </div>
