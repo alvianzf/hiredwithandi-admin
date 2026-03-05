@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { FiX, FiCheck, FiSearch, FiUserPlus, FiShield, FiLock } from "react-icons/fi";
+import { FiX, FiCheck, FiSearch, FiUserPlus, FiShield, FiKey } from "react-icons/fi";
 import { toast } from "sonner";
 import api from "../utils/api";
 import Swal from 'sweetalert2';
@@ -44,12 +44,14 @@ export default function PlatformUsers() {
         }),
         api.get("/organizations")
       ]);
-      setUsers(usersRes.data.data.map(u => ({
+      const usersData = usersRes.data.data || [];
+      const usersMeta = usersRes.data?.meta || {};
+      setUsers(usersData.map(u => ({
         ...u, 
         systemRole: u.role === 'SUPERADMIN' ? 'Superadmin' : u.role === 'ADMIN' ? 'Org Admin' : 'Member'
       })));
-      setTotalUsers(usersRes.data.meta.total);
-      setCurrentPage(usersRes.data.meta.page);
+      setTotalUsers(usersMeta.total ?? usersData.length);
+      setCurrentPage(usersMeta.page || page);
       setOrganizations(orgRes.data.data);
     } catch (err) {
       console.error("PlatformUsers Load Error:", err);
@@ -189,10 +191,12 @@ export default function PlatformUsers() {
           <select
             value={limit}
             onChange={(e) => {
-              setLimit(Number(e.target.value));
+              const newLimit = Number(e.target.value);
+              setLimit(newLimit);
               setCurrentPage(1);
+              loadData(1); // Explicitly call with page 1
             }}
-            className="bg-[var(--bg-color)] border border-[var(--border-color)] rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[var(--color-primary-red)] outline-none"
+            className="select-styled text-xs py-1 px-2"
           >
             {[10, 25, 50, 100].map(v => (
               <option key={v} value={v}>{v}</option>
@@ -271,7 +275,7 @@ export default function PlatformUsers() {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
+              className="select-styled w-full"
             >
               <option value="All">All Roles</option>
               <option value="Member">Member</option>
@@ -282,7 +286,7 @@ export default function PlatformUsers() {
             <select
               value={orgFilter}
               onChange={(e) => setOrgFilter(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
+              className="select-styled w-full"
             >
               <option value="All">All Organizations</option>
               <option value="sys">System (Global)</option>
@@ -294,7 +298,7 @@ export default function PlatformUsers() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium"
+              className="select-styled w-full"
             >
               <option value="All">All Statuses</option>
               <option value="Active">Active</option>
@@ -305,7 +309,7 @@ export default function PlatformUsers() {
               value={batchFilter}
               onChange={(e) => setBatchFilter(e.target.value)}
               disabled={orgFilter === "All" || orgFilter === "sys"}
-              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors shadow-inner font-medium disabled:opacity-50"
+              className="select-styled w-full disabled:opacity-50"
             >
               <option value="All">All Batches</option>
               {batches.map(b => (
@@ -372,7 +376,7 @@ export default function PlatformUsers() {
                         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
                           currentStatus === 'ACTIVE' 
                             ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
-                            : 'bg-red-500/20 text-red-600 dark:text-red-400'
+                            : 'bg-orange-500/20 text-orange-600 dark:text-orange-400'
                         }`}>
                           {currentStatus}
                         </span>
@@ -381,6 +385,7 @@ export default function PlatformUsers() {
                         <button
                           onClick={() => openEditModal(user)}
                           className="text-yellow-600 dark:text-yellow-500 hover:text-yellow-700 font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg"
+                          title="Edit User"
                         >
                           Edit
                         </button>
@@ -389,11 +394,12 @@ export default function PlatformUsers() {
                             className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
                             title="Reset Password"
                           >
-                            <FiLock size={14} /> Reset
+                            <FiKey size={14} /> Reset
                           </button>
                         <button
                           onClick={() => toggleUserStatus(user)}
                           className={`${currentStatus === 'ACTIVE' ? 'text-red-600 dark:text-red-500 hover:text-red-700' : 'text-green-600 dark:text-green-500 hover:text-green-700'} font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg`}
+                          title={currentStatus === 'ACTIVE' ? 'Disable User' : 'Enable User'}
                         >
                           {currentStatus === 'ACTIVE' ? 'Disable' : 'Enable'}
                         </button>
@@ -428,7 +434,7 @@ export default function PlatformUsers() {
                 <select 
                   value={newUser.role}
                   onChange={e => setNewUser({...newUser, role: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors font-bold"
+                  className="select-styled w-full"
                 >
                   <option value="Org Admin">Organizational Admin</option>
                   <option value="Superadmin">Global Superadmin</option>
@@ -442,7 +448,7 @@ export default function PlatformUsers() {
                     required
                     value={newUser.orgId}
                     onChange={e => setNewUser({...newUser, orgId: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] transition-colors"
+                    className="select-styled w-full"
                   >
                     <option value="" disabled>Select an Organization</option>
                     {organizations.map(o => (

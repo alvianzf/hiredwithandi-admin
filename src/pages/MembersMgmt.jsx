@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FiX, FiCheck, FiUploadCloud, FiExternalLink, FiSearch, FiLock } from "react-icons/fi";
+import { FiX, FiCheck, FiUploadCloud, FiExternalLink, FiSearch, FiKey, FiEdit, FiAlertCircle, FiTrash2 } from "react-icons/fi";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import api from "../utils/api";
@@ -58,11 +58,14 @@ export default function MembersMgmt() {
             status: statusFilter !== "All" ? statusFilter : undefined
           }
         });
-        setMembers(res.data.data);
-        setTotalMembers(res.data.meta.total);
-        setCurrentPage(res.data.meta.page);
-      } catch {
-        toast.error("Failed to load members");
+        const data = res.data.data || [];
+        const meta = res.data?.meta || {};
+        setMembers(data);
+        setTotalMembers(meta.total ?? data.length);
+        setCurrentPage(meta.page || page);
+      } catch (error) {
+        console.error("Failed to load members:", error);
+        toast.error(error.response?.data?.error?.message || "Failed to load members");
       }
     }
   }, [admin, batchFilter, limit, search, statusFilter]);
@@ -200,8 +203,62 @@ export default function MembersMgmt() {
         toast.success(`Batch ${action}d successfully`);
         loadBatches();
         loadMembers(); // reload members to reflect cascaded status changes
+      } catch (err) {
+        toast.error(err.response?.data?.error?.message || `Failed to ${action} batch`);
+      }
+    }
+  };
+
+  const handleEditBatchName = async (batch) => {
+    const { value: newName } = await Swal.fire({
+      title: 'Rename Batch',
+      input: 'text',
+      inputLabel: 'New Batch Name',
+      inputValue: batch.name,
+      showCancelButton: true,
+      confirmButtonColor: '#ffb800',
+      cancelButtonColor: '#6B7280',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Batch name cannot be empty!'
+        }
+      }
+    });
+
+    if (newName && newName !== batch.name) {
+      try {
+        await api.patch(`/batches/${batch.id}`, { name: newName });
+        toast.success("Batch renamed successfully");
+        loadBatches();
+        loadMembers(); 
+      } catch (error) {
+        toast.error(error.response?.data?.error?.message || "Failed to rename batch");
+      }
+    }
+  };
+
+  const handleDeleteBatch = async (batchId, batchName) => {
+    const result = await Swal.fire({
+      title: 'Delete Batch?',
+      text: `Are you sure you want to delete "${batchName}"? Users in this batch will be unassigned.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      confirmButtonText: 'Yes, delete!',
+      background: 'rgba(23, 23, 23, 0.9)',
+      color: '#fff',
+      customClass: {
+        popup: 'rounded-2xl border border-[var(--border-color)] backdrop-blur-md',
+      }
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/batches/${batchId}`);
+        toast.success("Batch deleted");
+        loadBatches();
       } catch {
-        toast.error(`Failed to ${action} batch`);
+        toast.error("Failed to delete batch");
       }
     }
   };
@@ -284,7 +341,7 @@ export default function MembersMgmt() {
               setLimit(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="bg-[var(--bg-color)] border border-[var(--border-color)] rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[var(--color-primary-yellow)] outline-none"
+            className="select-styled text-xs py-1 px-2"
           >
             {[10, 25, 50, 100].map(v => (
               <option key={v} value={v}>{v}</option>
@@ -379,7 +436,7 @@ export default function MembersMgmt() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors shadow-inner font-medium"
+              className="select-styled flex-1"
             >
               <option value="All">All Statuses</option>
               <option value="Active">Active</option>
@@ -389,7 +446,7 @@ export default function MembersMgmt() {
             <select
               value={batchFilter}
               onChange={(e) => setBatchFilter(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors shadow-inner font-medium"
+              className="select-styled flex-1"
             >
               <option value="">All Batches</option>
               {batches.map(b => (
@@ -429,7 +486,7 @@ export default function MembersMgmt() {
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                         member.status === 'ACTIVE' 
                           ? 'bg-green-500/20 text-green-500' 
-                          : 'bg-gray-500/20 text-gray-400'
+                          : 'bg-orange-500/20 text-orange-400'
                       }`}>
                         {member.status}
                       </span>
@@ -444,6 +501,7 @@ export default function MembersMgmt() {
                       <Link 
                         to={`/members/${member.id}`}
                         className="text-[var(--color-primary-yellow)] hover:underline font-medium flex items-center gap-1 transition-colors"
+                        title="View Member Details"
                       >
                         <FiExternalLink size={14} /> View
                       </Link>
@@ -452,6 +510,7 @@ export default function MembersMgmt() {
                           <button 
                             onClick={() => openEditModal(member)}
                             className="text-neutral-400 hover:text-white font-medium transition-colors"
+                            title="Edit Member"
                           >
                             Edit
                           </button>
@@ -460,11 +519,12 @@ export default function MembersMgmt() {
                             className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
                             title="Reset Password"
                           >
-                            <FiLock size={14} /> Reset
+                            <FiKey size={14} /> Reset
                           </button>
                           <button 
                             onClick={() => toggleMemberStatus(member)}
                             className={`${member.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'} font-medium transition-colors`}
+                            title={member.status === 'ACTIVE' ? 'Disable Member' : 'Enable Member'}
                           >
                             {member.status === 'ACTIVE' ? 'Disable' : 'Enable'}
                           </button>
@@ -712,76 +772,83 @@ export default function MembersMgmt() {
               </button>
             </div>
             
-            <div className="p-6 border-b border-[var(--border-color)]">
-              <h4 className="text-sm font-bold text-[var(--text-secondary)] mb-3 uppercase tracking-wider">Create New Batch</h4>
-              <form onSubmit={handleCreateBatch} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="e.g. Spring 2025"
-                  value={newBatchName}
-                  onChange={e => setNewBatchName(e.target.value)}
-                  className="flex-1 px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={!newBatchName.trim()}
-                  className="bg-[var(--color-primary-yellow)] text-black px-4 py-2 rounded-lg font-bold hover:bg-yellow-500 transition-colors disabled:opacity-50"
-                >
-                  Create
-                </button>
-              </form>
-            </div>
+            {/* Batch Creation Form - ONLY for Superadmins */}
+            {admin?.role === 'SUPERADMIN' && (
+              <div className="p-6 border-b border-[var(--border-color)] bg-black/5 dark:bg-white/5">
+                <form onSubmit={handleCreateBatch} className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="New batch name (e.g. Winter 2024)" 
+                    value={newBatchName}
+                    onChange={e => setNewBatchName(e.target.value)}
+                    className="flex-1 px-4 py-2 rounded-lg bg-black/5 dark:bg-black/20 border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-yellow)] transition-colors"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={!newBatchName.trim()}
+                    className="bg-[var(--color-primary-yellow)] text-black px-6 py-2 rounded-lg font-bold hover:bg-yellow-500 transition-colors shadow-md disabled:opacity-50"
+                  >
+                    Add Batch
+                  </button>
+                </form>
+              </div>
+            )}
 
-            <div className="p-0 overflow-y-auto flex-1">
+            <div className="p-0 overflow-y-auto flex-1 bg-black/5 dark:bg-white/5">
               {batches.length === 0 ? (
-                <div className="p-8 text-center text-[var(--text-secondary)]">
-                  No batches found for this organization.
+                <div className="p-12 text-center">
+                  <FiAlertCircle className="mx-auto h-12 w-12 text-[var(--text-secondary)] mb-4 opacity-20" />
+                  <p className="text-[var(--text-secondary)] italic">No batches found for this organization.</p>
                 </div>
               ) : (
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-black/5 dark:bg-white/5 border-b border-[var(--border-color)]">
-                      <th className="p-4 font-semibold">Batch Name</th>
-                      <th className="p-4 font-semibold text-center">Members</th>
-                      <th className="p-4 font-semibold">Status</th>
-                      <th className="p-4 font-semibold text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {batches.map(batch => (
-                      <tr key={batch.id} className={`border-b border-[var(--border-color)] ${batch.status === 'DISABLED' ? 'opacity-50' : ''}`}>
-                        <td className="p-4 font-medium">{batch.name}</td>
-                        <td className="p-4 text-center">
-                          <span className="bg-black/10 dark:bg-white/10 px-2 py-0.5 rounded-full text-xs font-bold">
-                            {batch._count?.users || 0}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-widest ${
-                            batch.status === 'ACTIVE' 
-                              ? 'bg-green-500/20 text-green-500' 
-                              : 'bg-red-500/20 text-red-500'
-                          }`}>
-                            {batch.status || 'ACTIVE'}
-                          </span>
-                        </td>
-                        <td className="p-4 text-right">
-                          {!admin?.isDisabled && (
+                <div className="divide-y divide-[var(--border-color)]">
+                  {batches.map(batch => (
+                    <div key={batch.id} className={`p-4 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-between ${batch.status === 'DISABLED' ? 'opacity-60' : ''}`}>
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-black ${batch.status === 'DISABLED' ? 'bg-gray-500' : 'bg-[var(--color-primary-yellow)]'}`}>
+                          {batch.name.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-[var(--text-primary)] flex items-center gap-2">
+                            {batch.name}
+                            {batch.status === 'DISABLED' && <span className="text-[10px] bg-orange-500/20 text-orange-500 px-1.5 py-0.5 rounded uppercase font-black">Disabled</span>}
+                          </h4>
+                          <p className="text-xs text-[var(--text-secondary)] font-medium">{batch._count?.users || 0} members enrolled</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {!admin?.isDisabled ? (
+                          <>
+                            <button 
+                              onClick={() => handleEditBatchName(batch)}
+                              className="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
+                              title="Rename Batch"
+                            >
+                              <FiEdit size={16} />
+                            </button>
                             <button 
                               onClick={() => toggleBatchStatus(batch)}
-                              className={`${batch.status === 'ACTIVE' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'} px-3 py-1.5 rounded-lg font-medium transition-colors`}
+                              className={`p-2 rounded-lg transition-colors ${batch.status === 'ACTIVE' ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
+                              title={batch.status === 'ACTIVE' ? 'Disable Batch' : 'Enable Batch'}
                             >
-                              {batch.status === 'ACTIVE' ? 'Disable' : 'Enable'}
+                              {batch.status === 'ACTIVE' ? <FiX size={16} /> : <FiCheck size={16} />}
                             </button>
-                          )}
-                          {admin?.isDisabled && (
-                            <span className="text-xs text-[var(--text-secondary)] font-medium italic">Read-only</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            <button 
+                              onClick={() => handleDeleteBatch(batch.id, batch.name)}
+                              className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                              title="Delete Batch Permanently"
+                            >
+                              <FiTrash2 size={16} />
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-xs text-[var(--text-secondary)] italic">Read-only</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
