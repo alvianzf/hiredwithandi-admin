@@ -105,12 +105,18 @@ export default function OrganizationsMgmt() {
       inputLabel: 'New Batch Name',
       inputValue: batch.name,
       showCancelButton: true,
-      confirmButtonColor: '#ffb800',
-      cancelButtonColor: '#6B7280',
+      confirmButtonColor: 'var(--primary)',
+      cancelButtonColor: 'transparent',
+      background: 'var(--bg-secondary)',
+      color: 'var(--text-primary)',
+      customClass: {
+        popup: 'rounded-3xl border border-[var(--border-color)] shadow-2xl',
+        input: 'rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]',
+        cancelButton: 'border border-[var(--border-color)] text-[var(--text-secondary)] rounded-xl',
+        confirmButton: 'rounded-xl font-bold',
+      },
       inputValidator: (value) => {
-        if (!value) {
-          return 'Batch name cannot be empty!'
-        }
+        if (!value) return 'Batch name cannot be empty!'
       }
     });
 
