@@ -383,21 +383,21 @@ export default function PlatformUsers() {
                         <button
                           onClick={() => openEditModal(user)}
                           className="cursor-pointer text-yellow-600 dark:text-yellow-500 hover:text-yellow-700 font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg"
-                          title="Edit user details"
+                          data-tooltip="Edit user details"
                         >
                           Edit
                         </button>
                           <button
                             onClick={() => handleResetPassword(user)}
                             className="cursor-pointer bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
-                            title="Reset user's password"
+                            data-tooltip="Reset user's password"
                           >
                             <FiKey size={14} /> Reset
                           </button>
                         <button
                           onClick={() => toggleUserStatus(user)}
                           className={`cursor-pointer ${currentStatus === 'ACTIVE' ? 'text-red-600 dark:text-red-500 hover:text-red-700' : 'text-green-600 dark:text-green-500 hover:text-green-700'} font-bold transition-colors bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg`}
-                          title={currentStatus === 'ACTIVE' ? 'Disable this user' : 'Enable this user'}
+                          data-tooltip={currentStatus === 'ACTIVE' ? 'Disable user' : 'Enable user'}
                         >
                           {currentStatus === 'ACTIVE' ? 'Disable' : 'Enable'}
                         </button>

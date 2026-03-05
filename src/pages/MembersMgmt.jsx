@@ -499,7 +499,7 @@ export default function MembersMgmt() {
                       <Link 
                         to={`/members/${member.id}`}
                         className="text-[var(--color-primary-yellow)] hover:underline font-medium flex items-center gap-1 transition-colors"
-                        title="View Member Details"
+                        data-tooltip="View member details"
                       >
                         <FiExternalLink size={14} /> View
                       </Link>
@@ -508,21 +508,21 @@ export default function MembersMgmt() {
                           <button 
                             onClick={() => openEditModal(member)}
                             className="text-neutral-400 hover:text-white font-medium transition-colors"
-                            title="Edit Member"
+                            data-tooltip="Edit member"
                           >
                             Edit
                           </button>
                           <button 
                             onClick={() => handleResetPassword(member)}
                             className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
-                            title="Reset Password"
+                            data-tooltip="Reset password"
                           >
                             <FiKey size={14} /> Reset
                           </button>
                           <button 
                             onClick={() => toggleMemberStatus(member)}
                             className={`${member.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'} font-medium transition-colors`}
-                            title={member.status === 'ACTIVE' ? 'Disable Member' : 'Enable Member'}
+                            data-tooltip={member.status === 'ACTIVE' ? 'Disable member' : 'Enable member'}
                           >
                             {member.status === 'ACTIVE' ? 'Disable' : 'Enable'}
                           </button>
@@ -818,21 +818,21 @@ export default function MembersMgmt() {
                             <button 
                               onClick={() => handleEditBatchName(batch)}
                               className="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
-                              title="Rename Batch"
+                              data-tooltip="Rename batch"
                             >
                               <FiEdit size={16} />
                             </button>
                             <button 
                               onClick={() => toggleBatchStatus(batch)}
                               className={`p-2 rounded-lg transition-colors ${batch.status === 'ACTIVE' ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
-                              title={batch.status === 'ACTIVE' ? 'Disable Batch' : 'Enable Batch'}
+                              data-tooltip={batch.status === 'ACTIVE' ? 'Disable batch' : 'Enable batch'}
                             >
                               {batch.status === 'ACTIVE' ? <FiX size={16} /> : <FiCheck size={16} />}
                             </button>
                             <button 
                               onClick={() => handleDeleteBatch(batch.id, batch.name)}
                               className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-                              title="Delete Batch Permanently"
+                              data-tooltip="Delete batch permanently"
                             >
                               <FiTrash2 size={16} />
                             </button>

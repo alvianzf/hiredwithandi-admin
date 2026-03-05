@@ -391,7 +391,7 @@ export default function OrganizationsMgmt() {
                 <button 
                   onClick={() => handleToggleOrgStatus(org)}
                   className={`text-sm flex items-center gap-2 font-medium transition-colors ${org.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'}`}
-                  title={org.status === 'ACTIVE' ? 'Disable Organization' : 'Enable Organization'}
+                  data-tooltip={org.status === 'ACTIVE' ? 'Disable org' : 'Enable org'}
                 >
                   {org.status === 'ACTIVE' ? <FiX size={14} /> : <FiAlertCircle size={14} />} 
                   {org.status === 'ACTIVE' ? 'Disable' : 'Enable'}
@@ -417,7 +417,7 @@ export default function OrganizationsMgmt() {
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
-                title="Close"
+                data-tooltip="Close"
               >
                 <FiX size={20} />
               </button>
@@ -494,7 +494,7 @@ export default function OrganizationsMgmt() {
               <button 
                 onClick={() => { setIsEditAdminModalOpen(false); setEditingAdmin(null); }}
                 className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
-                title="Close"
+                data-tooltip="Close"
               >
                 <FiX size={20} />
               </button>
@@ -549,7 +549,7 @@ export default function OrganizationsMgmt() {
               <button 
                 onClick={() => setIsManageModalOpen(false)}
                 className="text-[var(--text-secondary)] hover:text-red-500 transition-colors bg-white/5 p-2 rounded-full"
-                title="Close"
+                data-tooltip="Close"
               >
                 <FiX size={20} />
               </button>
@@ -582,7 +582,7 @@ export default function OrganizationsMgmt() {
                           type="button"
                           onClick={() => handleResetPassword(admin)}
                           className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
-                          title="Reset Password"
+                          data-tooltip="Reset password"
                         >
                           <FiKey size={16} />
                         </button>
@@ -590,7 +590,7 @@ export default function OrganizationsMgmt() {
                           type="button"
                           onClick={() => removeAdmin(admin.id)}
                           className="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors"
-                          title="Disable Admin"
+                          data-tooltip="Remove admin access"
                         >
                           <FiX size={16} />
                         </button>
@@ -645,7 +645,7 @@ export default function OrganizationsMgmt() {
                             type="button"
                             onClick={() => handleEditBatchName(batch)}
                             className="text-blue-500 hover:bg-blue-500/10 p-1.5 rounded-lg transition-colors"
-                            title="Rename Batch"
+                            data-tooltip="Rename batch"
                           >
                             <FiEdit size={14} />
                           </button>
@@ -653,7 +653,7 @@ export default function OrganizationsMgmt() {
                               type="button"
                               onClick={() => toggleBatchStatus(batch)}
                               className={`p-2 rounded-lg transition-colors ${batch.status === 'ACTIVE' ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
-                              title={batch.status === 'ACTIVE' ? 'Disable Batch' : 'Enable Batch'}
+                              data-tooltip={batch.status === 'ACTIVE' ? 'Disable batch' : 'Enable batch'}
                             >
                               {batch.status === 'ACTIVE' ? <FiX size={16} /> : <FiCheck size={16} />}
                             </button>
@@ -661,7 +661,7 @@ export default function OrganizationsMgmt() {
                               type="button"
                               onClick={() => handleDeleteBatch(batch.id, batch.name)}
                               className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-                              title="Delete Batch Permanently"
+                              data-tooltip="Delete batch permanently"
                             >
                               <FiTrash2 size={16} />
                             </button>
@@ -698,14 +698,14 @@ export default function OrganizationsMgmt() {
                     type="button"
                     onClick={() => handleToggleOrgStatus()}
                     className="flex-1 py-2 rounded-xl text-sm font-bold border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
-                    title={selectedOrg.status === 'ACTIVE' ? 'Disable this organization and all its members' : 'Re-enable this organization'}
+                    data-tooltip={selectedOrg.status === 'ACTIVE' ? 'Disable org &amp; members' : 'Re-enable org'}
                   >
                     {selectedOrg.status === 'ACTIVE' ? 'Disable' : 'Enable'}
                   </button>
                   <button 
                     onClick={handleDeleteOrg}
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-                    title="Permanently delete this organization — cannot be undone"
+                    data-tooltip="Permanently delete — cannot be undone"
                   >
                     <FiTrash2 size={18} /> Delete
                   </button>
