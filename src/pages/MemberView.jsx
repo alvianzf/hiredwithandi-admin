@@ -1,11 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { FiArrowLeft, FiDownload } from "react-icons/fi";
+import { FiArrowLeft, FiDownload, FiCheck } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import { jsPDF } from "jspdf";
 import domtoimage from "dom-to-image-more";
 import { toast } from "sonner";
 import api from "../utils/api";
+
+const CHECKLIST_CATEGORIES = [
+  { key: "resume", label: "Resume Preparation", icon: "📄" },
+  { key: "cover_letter", label: "Cover Letter", icon: "✉️" },
+  { key: "portfolio", label: "Portfolio", icon: "📁" },
+  { key: "linkedin", label: "LinkedIn Profile", icon: "🔗" },
+  { key: "company_research", label: "Company Research", icon: "🏢" },
+  { key: "application", label: "Job Application", icon: "📝" },
+  { key: "interview", label: "Interview Preparation", icon: "🎯" }
+];
 
 export default function MemberView() {
   const { admin } = useAuth();
@@ -213,10 +223,57 @@ export default function MemberView() {
               Based on {statsWithDefaults.jobFitPercentage?.basedOn || 0} jobs with JFP data
             </div>
           </div>
-
         </div>
 
-        {/* --- 2. KANBAN BOARD (Updated Columns) --- */}
+        {/* --- 3. CHECKLIST PROGRESS --- */}
+        <div className="glass p-6 rounded-2xl shadow-sm min-h-[400px]">
+          <div className="flex justify-between items-center mb-6 border-b border-[var(--border-color)] pb-3">
+            <h3 className="text-xl font-bold text-[var(--color-primary-yellow)]">
+              Onboarding Checklist Progress
+            </h3>
+            {member.isChecklistComplete ? (
+              <span className="px-3 py-1 bg-green-500/10 text-green-400 font-bold text-sm rounded-lg flex items-center gap-1.5"><FiCheck /> Fully Setup</span>
+            ) : (
+              <span className="px-3 py-1 bg-yellow-500/10 text-yellow-500 font-bold text-sm rounded-lg flex items-center gap-1.5">Action Required</span>
+            )}
+          </div>
+          
+          {!member.checklistProgress?.state ? (
+            <div className="p-8 text-center text-[var(--text-secondary)] italic">
+              This member hasn&apos;t started their onboarding checklist yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {CHECKLIST_CATEGORIES.map(cat => {
+                const catState = member.checklistProgress.state[cat.key] || {};
+                const keys = Object.keys(catState);
+                if (keys.length === 0) return null;
+                
+                return (
+                  <div key={cat.key} className="bg-black/5 dark:bg-white/5 rounded-xl p-4 border border-[var(--border-color)]">
+                    <h4 className="font-bold text-white mb-3 text-[15px] flex justify-between items-center">
+                      <span>{cat.icon} {cat.label}</span>
+                    </h4>
+                    <div className="space-y-2">
+                      {Object.entries(catState).map(([itemKey, status]) => (
+                        <div key={itemKey} className="flex justify-between items-center text-xs">
+                          <span className={`${status === 'DONE' ? 'text-green-500 line-through opacity-70' : 'text-neutral-300'}`}>
+                            {itemKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                          {status === 'DONE' && <span className="text-green-400 font-bold px-1.5 py-0.5 rounded bg-green-500/10">Done</span>}
+                          {status === 'IN_PROGRESS' && <span className="text-yellow-400 font-bold px-1.5 py-0.5 rounded bg-yellow-500/10">In Prog</span>}
+                          {status === 'NOT_STARTED' && <span className="text-neutral-500 font-bold px-1.5 py-0.5 rounded bg-white/5">Wait</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* --- 4. KANBAN BOARD (Updated Columns) --- */}
         <div className="glass p-6 rounded-2xl min-h-[400px]">
           <h3 className="text-xl font-bold mb-6 border-b border-[var(--border-color)] pb-3 text-[var(--color-primary-yellow)]">
             Job Tracker Pipeline 

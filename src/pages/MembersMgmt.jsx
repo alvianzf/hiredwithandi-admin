@@ -22,6 +22,13 @@ export default function MembersMgmt() {
   const [totalMembers, setTotalMembers] = useState(0);
   const [limit, setLimit] = useState(10);
   
+  // Checklist Stats
+  const [checklistStats, setChecklistStats] = useState({
+    totalCompleted: 0,
+    completionRate: 0,
+    memberProgress: []
+  });
+  
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newMember, setNewMember] = useState({ name: "", email: "", batchId: "" });
@@ -52,6 +59,17 @@ export default function MembersMgmt() {
     }
   }, [admin]);
 
+  const loadChecklistStats = useCallback(async () => {
+    if (admin?.orgId) {
+      try {
+        const res = await api.get(`/checklist/org/${admin.orgId}`);
+        setChecklistStats(res.data.data);
+      } catch (err) {
+        console.error("Failed to load checklist stats:", err);
+      }
+    }
+  }, [admin]);
+
   const loadMembers = useCallback(async (page = 1) => {
     if (admin) {
       try {
@@ -78,8 +96,9 @@ export default function MembersMgmt() {
 
   useEffect(() => {
     loadBatches();
+    loadChecklistStats();
     loadMembers(1);
-  }, [loadBatches, loadMembers]);
+  }, [loadBatches, loadChecklistStats, loadMembers]);
 
   const handleCreateBatch = async (e) => {
     e.preventDefault();
@@ -451,6 +470,34 @@ export default function MembersMgmt() {
         )}
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
+        <div className="glass rounded-xl p-6 border-b-2 border-[var(--color-primary-yellow)]">
+          <p className="text-sm font-medium text-[var(--text-secondary)] mb-1">Total Members</p>
+          <div className="flex items-end gap-3">
+            <h2 className="text-3xl font-bold">{totalMembers}</h2>
+          </div>
+        </div>
+        <div className="glass rounded-xl p-6 border-b-2 border-green-500">
+          <p className="text-sm font-medium text-[var(--text-secondary)] mb-1">Checklist Completions</p>
+          <div className="flex items-end gap-3">
+            <h2 className="text-3xl font-bold">{checklistStats?.totalCompleted || 0}</h2>
+            <span className="text-sm mb-1 text-green-400 font-medium">Fully Setup</span>
+          </div>
+        </div>
+        <div className="glass rounded-xl p-6 border-b-2 border-cyan-500">
+          <p className="text-sm font-medium text-[var(--text-secondary)] mb-1">Organization Set Up Rate</p>
+          <div className="flex items-end gap-3">
+            <h2 className="text-3xl font-bold">{checklistStats?.completionRate || 0}%</h2>
+          </div>
+          <div className="h-1.5 w-full bg-black/20 dark:bg-white/10 rounded-full mt-3 overflow-hidden">
+            <div 
+              className="h-full bg-cyan-500 transition-all duration-1000" 
+              style={{ width: `${checklistStats?.completionRate || 0}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="glass rounded-xl overflow-hidden shadow-xl">
         <div className="p-6 border-b border-[var(--border-color)] space-y-4 bg-black/5 dark:bg-white/5">
           <div className="relative">
@@ -496,6 +543,7 @@ export default function MembersMgmt() {
                 <th className="p-4 font-semibold">Name</th>
                 <th className="p-4 font-semibold">Email</th>
                 <th className="p-4 font-semibold">Batch</th>
+                <th className="p-4 font-semibold text-center">Setup</th>
                 <th className="p-4 font-semibold">Status</th>
                 <th className="p-4 font-semibold">Last Logged In</th>
                 <th className="p-4 font-semibold text-center">Actions</th>
@@ -514,6 +562,17 @@ export default function MembersMgmt() {
                     <td className="p-4 font-medium">{member.name}</td>
                     <td className="p-4 text-[var(--text-secondary)]">{member.email}</td>
                     <td className="p-4 text-[var(--text-secondary)]">{member.batch?.name || "-"}</td>
+                    <td className="p-4 text-center">
+                      {member.isChecklistComplete ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-md">
+                          <FiCheck size={12} /> Done
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-md">
+                          Pending
+                        </span>
+                      )}
+                    </td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                         member.status === 'ACTIVE' 
