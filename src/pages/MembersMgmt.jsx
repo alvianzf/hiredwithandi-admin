@@ -636,8 +636,8 @@ export default function MembersMgmt() {
       {/* 1. Create User Modal */}
       {isCreateModalOpen && (
         <div onClick={() => setIsCreateModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5 rounded-t-2xl">
               <h3 className="text-xl font-bold">Create New Member</h3>
               <button onClick={() => setIsCreateModalOpen(false)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
                 <FiX size={24} />
@@ -701,8 +701,8 @@ export default function MembersMgmt() {
       {/* 2. Edit User Modal */}
       {isEditModalOpen && editMember && (
         <div onClick={() => { setIsEditModalOpen(false); setEditMember(null); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5 rounded-t-2xl">
               <h3 className="text-xl font-bold">Edit Member</h3>
               <button 
                 onClick={() => {
@@ -774,8 +774,8 @@ export default function MembersMgmt() {
       {/* 3. CSV Upload Modal */}
       {isCsvModalOpen && (
         <div onClick={() => { setIsCsvModalOpen(false); resetCsvState(); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-lg rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5 rounded-t-2xl">
               <h3 className="text-xl font-bold">Batch Upload Members</h3>
               <button 
                 onClick={() => { setIsCsvModalOpen(false); resetCsvState(); }} 
@@ -909,8 +909,8 @@ export default function MembersMgmt() {
       {/* 4. Manage Batches Modal */}
       {isBatchesModalOpen && (
         <div onClick={() => setIsBatchesModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[80vh]">
-            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-2xl rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5 rounded-t-2xl">
               <h3 className="text-xl font-bold">Manage Batches</h3>
               <button 
                 onClick={() => setIsBatchesModalOpen(false)} 

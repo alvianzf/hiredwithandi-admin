@@ -415,8 +415,8 @@ export default function PlatformUsers() {
       {/* Create User Modal */}
       {isCreateModalOpen && (
         <div onClick={() => setIsCreateModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
-          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
-            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5 rounded-t-3xl">
               <h3 className="text-xl font-bold text-[var(--color-primary-red)] flex items-center gap-2"><FiShield /> Add Administrator</h3>
               <button 
                 onClick={() => setIsCreateModalOpen(false)}
@@ -502,8 +502,8 @@ export default function PlatformUsers() {
       {/* Edit User Modal */}
       {isEditModalOpen && editUser && (
         <div onClick={() => { setIsEditModalOpen(false); setEditUser(null); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-black/10 dark:bg-white/5 rounded-t-2xl">
               <h3 className="text-xl font-bold">Edit User</h3>
               <button 
                 onClick={() => {
