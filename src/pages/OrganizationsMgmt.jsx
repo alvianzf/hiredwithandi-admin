@@ -418,8 +418,8 @@ export default function OrganizationsMgmt() {
       {/* Create Modal */}
       {isModalOpen && (
         <div onClick={() => setIsModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
-          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
-            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-lg rounded-3xl shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5 rounded-t-3xl">
               <h3 className="text-xl font-bold text-[var(--color-primary-yellow)]">Onboard New Organization</h3>
               <button 
                 onClick={() => setIsModalOpen(false)}
@@ -495,8 +495,8 @@ export default function OrganizationsMgmt() {
       {/* Edit Admin Modal */}
       {isEditAdminModalOpen && editingAdmin && (
         <div onClick={() => { setIsEditAdminModalOpen(false); setEditingAdmin(null); }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
-          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
-            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5 rounded-t-3xl">
               <h3 className="text-xl font-bold text-[var(--color-primary-yellow)]">Edit Administrator</h3>
               <button 
                 onClick={() => { setIsEditAdminModalOpen(false); setEditingAdmin(null); }}
@@ -550,8 +550,8 @@ export default function OrganizationsMgmt() {
       )}
       {isManageModalOpen && selectedOrg && (
         <div onClick={() => setIsManageModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in transition-all">
-          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
-            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5">
+          <div onClick={(e) => e.stopPropagation()} className="glass w-full max-w-md rounded-3xl shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+            <div className="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-black/20 dark:bg-white/5 rounded-t-3xl">
               <h3 className="text-xl font-bold text-[var(--text-primary)]">Manage Organization</h3>
               <button 
                 onClick={() => setIsManageModalOpen(false)}
