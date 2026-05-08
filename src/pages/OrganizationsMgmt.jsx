@@ -382,7 +382,7 @@ export default function OrganizationsMgmt() {
                           <button 
                             key={admin.id} 
                             onClick={() => openEditAdminModal(admin)}
-                            className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-[var(--border-color)] text-left hover:border-[var(--color-primary-yellow)] hover:bg-[var(--color-primary-yellow)]/5 transition-all group/admin"
+                            className={`bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-[var(--border-color)] text-left hover:border-[var(--color-primary-yellow)] hover:bg-[var(--color-primary-yellow)]/5 transition-all group/admin ${admin.status === 'DISABLED' ? 'opacity-50 grayscale' : ''}`}
                           >
                             <p className="font-bold text-[var(--text-primary)] text-xs group-hover/admin:text-[var(--color-primary-yellow)]">{admin.name}</p>
                             <p className="text-[10px] text-[var(--text-secondary)] truncate max-w-[120px]">{admin.email}</p>
@@ -579,7 +579,7 @@ export default function OrganizationsMgmt() {
                 <label className="block text-sm font-bold text-[var(--text-secondary)] mb-3 uppercase tracking-wide">Current Administrators</label>
                 <div className="space-y-2 max-h-32 overflow-y-auto mb-4">
                   {getAdminsForOrg(selectedOrg.id).map(admin => (
-                    <div key={admin.id} className="flex justify-between items-center bg-black/5 dark:bg-white/5 p-2 rounded-lg border border-[var(--border-color)]">
+                    <div key={admin.id} className={`flex justify-between items-center bg-black/5 dark:bg-white/5 p-2 rounded-lg border border-[var(--border-color)] ${admin.status === 'DISABLED' ? 'opacity-50 grayscale' : ''}`}>
                       <div>
                         <p className="font-medium text-[var(--text-primary)] text-sm">{admin.name}</p>
                         <p className="text-xs text-[var(--text-secondary)]">{admin.email}</p>
