@@ -87,7 +87,7 @@ export default function CustomSelect({
       {open && (
         <ul
           role="listbox"
-          className="absolute z-50 mt-1 w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+          className="absolute z-50 mt-1 w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] shadow-2xl overflow-y-auto max-h-40 animate-in fade-in slide-in-from-top-2 duration-150 custom-scrollbar"
           style={{ minWidth: "100%" }}
         >
           {options.map((opt) => {
