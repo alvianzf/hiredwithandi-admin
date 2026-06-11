@@ -8,4 +8,27 @@ export default defineConfig({
   server: {
     port: 5174,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+
+          if (
+            id.includes("/react/") ||
+            id.includes("/react-dom/") ||
+            id.includes("/react-router-dom/") ||
+            id.includes("/react-router/") ||
+            id.includes("/scheduler/")
+          ) {
+            return "vendor-react";
+          }
+          if (id.includes("/papaparse/")) return "vendor-papaparse";
+          if (id.includes("/react-icons/")) return "vendor-icons";
+
+          return "vendor";
+        },
+      },
+    },
+  },
 });

@@ -1,10 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { FiArrowLeft, FiDownload, FiCheck } from "react-icons/fi";
+import { FiArrowLeft, FiCheck } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
-import { jsPDF } from "jspdf";
-import domtoimage from "dom-to-image-more";
-import { toast } from "sonner";
 import api from "../utils/api";
 
 const CHECKLIST_CATEGORIES = [
@@ -24,8 +21,6 @@ export default function MemberView() {
   const [stats, setStats] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const reportRef = useRef(null);
 
   useEffect(() => {
     const fetchMemberData = async () => {
@@ -45,52 +40,6 @@ export default function MemberView() {
     };
     fetchMemberData();
   }, [id]);
-
-  const generatePDF = async () => {
-    if (!reportRef.current) return;
-    setIsGenerating(true);
-    const toastId = toast.loading("Preparing your report...");
-    
-    try {
-      // Small timeout to allow UI update before capture if needed
-      await new Promise(r => setTimeout(r, 500));
-      
-      const width = reportRef.current.scrollWidth;
-      const height = reportRef.current.scrollHeight;
-      
-      // Use domtoimage instead of html2canvas to avoid oklch parsing issues
-      const imgData = await domtoimage.toPng(reportRef.current, {
-        width,
-        height,
-        bgcolor: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff',
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left'
-        },
-        cacheBust: true
-      });
-      
-      // Calculate dimensions in points (pt)
-      // Standard DPI is 96, jsPDF uses 72pt per inch.
-      const pdfWidth = width * 0.75;
-      const pdfHeight = height * 0.75;
-      
-      const pdf = new jsPDF({
-        orientation: pdfWidth > pdfHeight ? 'l' : 'p',
-        unit: 'pt',
-        format: [pdfWidth, pdfHeight] 
-      });
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${member?.name || 'Member'}_Report.pdf`);
-      toast.success("Report downloaded successfully!", { id: toastId });
-    } catch (error) {
-      console.error("PDF generation failed", error);
-      toast.error("Failed to generate PDF. Please try again.", { id: toastId });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   if (loading && !member) {
     return <div className="p-12 text-center text-xl text-[var(--text-secondary)] flex flex-col items-center justify-center space-y-4">
@@ -128,19 +77,9 @@ export default function MemberView() {
             <p className="text-[var(--text-secondary)] mt-1">Viewing details for {member.name}</p>
           </div>
         </div>
-        
-        {/* <button 
-          onClick={generatePDF}
-          disabled={isGenerating}
-          className={`${isGenerating ? 'opacity-50 cursor-not-allowed' : ''} flex items-center space-x-2 bg-[var(--color-primary-yellow)] text-black px-5 py-2.5 rounded-lg font-bold hover:bg-yellow-500 transition-colors shadow-md`}
-        >
-          <FiDownload size={18} />
-          <span>{isGenerating ? "Generating..." : "Download PDF Report"}</span>
-        </button> */}
       </div>
 
-      {/* Wrapping the content we want in the PDF with a div ref */}
-      <div ref={reportRef} data-report-canvas="true" className="space-y-6 pt-4 pb-8 pl-2 pr-2">
+      <div className="space-y-6 pt-4 pb-8 pl-2 pr-2">
         {/* Profile Details */}
         <div className="glass p-6 sm:p-8 rounded-2xl flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-8 shadow-sm">
           <div className="w-24 h-24 rounded-full bg-[var(--color-primary-red)] flex items-center justify-center text-white text-3xl font-bold shadow-lg flex-shrink-0">

@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FiX, FiCheck, FiUploadCloud, FiExternalLink, FiSearch, FiKey, FiEdit, FiAlertCircle, FiTrash2 } from "react-icons/fi";
+import { FiX, FiCheck, FiUploadCloud, FiSearch, FiEdit, FiAlertCircle, FiTrash2 } from "react-icons/fi";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import api from "../utils/api";
 import Swal from 'sweetalert2';
 import CustomSelect from "../components/CustomSelect";
 import Tooltip from "../components/Tooltip";
+import MemberRow from "../components/MemberRow";
 
 export default function MembersMgmt() {
   const { admin } = useAuth();
@@ -135,13 +135,13 @@ export default function MembersMgmt() {
     }
   };
 
-  const openEditModal = (member) => {
-    setEditMember({ 
-      ...member, 
+  const openEditModal = useCallback((member) => {
+    setEditMember({
+      ...member,
       batchId: member.batch?.id || member.batchId || ""
     });
     setIsEditModalOpen(true);
-  };
+  }, []);
 
   const handleEditUser = async (e) => {
     e.preventDefault();
@@ -162,7 +162,7 @@ export default function MembersMgmt() {
     }
   };
 
-  const toggleMemberStatus = async (member) => {
+  const toggleMemberStatus = useCallback(async (member) => {
     const newStatus = member.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
     const action = member.status === 'ACTIVE' ? 'disable' : 'enable';
 
@@ -185,9 +185,9 @@ export default function MembersMgmt() {
         toast.error(`Failed to ${action} member`);
       }
     }
-  };
+  }, [loadMembers]);
 
-  const handleResetPassword = async (member) => {
+  const handleResetPassword = useCallback(async (member) => {
     const result = await Swal.fire({
       title: `Reset Password?`,
       text: `This will clear ${member.name}'s password and force them to set up a new one on their next login. Are you sure?`,
@@ -206,7 +206,7 @@ export default function MembersMgmt() {
         toast.error(`Failed to reset password`);
       }
     }
-  };
+  }, []);
 
   const toggleBatchStatus = async (batch) => {
     const newStatus = batch.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
@@ -558,71 +558,14 @@ export default function MembersMgmt() {
                 </tr>
               ) : (
                 members.map(member => (
-                  <tr key={member.id} className={`border-b border-[var(--border-color)] ${member.status === 'DISABLED' ? 'opacity-50' : ''} hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}>
-                    <td className="p-4 font-medium">{member.name}</td>
-                    <td className="p-4 text-[var(--text-secondary)]">{member.email}</td>
-                    <td className="p-4 text-[var(--text-secondary)]">{member.batch?.name || "-"}</td>
-                    <td className="p-4 text-center">
-                      {member.isChecklistComplete ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-md">
-                          <FiCheck size={12} /> Done
-                        </span>
-                      ) : (
-                        <span className="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-md">
-                          Pending
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        member.status === 'ACTIVE' 
-                          ? 'bg-green-500/20 text-green-500' 
-                          : 'bg-orange-500/20 text-orange-400'
-                      }`}>
-                        {member.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-[var(--text-secondary)]">
-                      {member.lastLogin ? new Date(member.lastLogin).toLocaleDateString(undefined, {
-                        year: 'numeric', month: 'short', day: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                      }) : 'Never'}
-                    </td>
-                    <td className="p-4 flex justify-center space-x-4 items-center">
-                      <Link 
-                        to={`/members/${member.id}`}
-                        className="text-[var(--color-primary-yellow)] hover:underline font-medium flex items-center gap-1 transition-colors"
-                        data-tooltip="View member details"
-                      >
-                        <FiExternalLink size={14} /> View
-                      </Link>
-                      {!admin?.isDisabled && (
-                        <>
-                          <button 
-                            onClick={() => openEditModal(member)}
-                            className="text-neutral-400 hover:text-white font-medium transition-colors"
-                            data-tooltip="Edit member"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => handleResetPassword(member)}
-                            className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
-                            data-tooltip="Reset password"
-                          >
-                            <FiKey size={14} /> Reset
-                          </button>
-                          <button 
-                            onClick={() => toggleMemberStatus(member)}
-                            className={`${member.status === 'ACTIVE' ? 'text-red-500 hover:text-red-400' : 'text-green-500 hover:text-green-400'} font-medium transition-colors`}
-                            data-tooltip={member.status === 'ACTIVE' ? 'Disable member' : 'Enable member'}
-                          >
-                            {member.status === 'ACTIVE' ? 'Disable' : 'Enable'}
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
+                  <MemberRow
+                    key={member.id}
+                    member={member}
+                    isAdminDisabled={admin?.isDisabled}
+                    onEdit={openEditModal}
+                    onResetPassword={handleResetPassword}
+                    onToggleStatus={toggleMemberStatus}
+                  />
                 ))
               )}
             </tbody>
